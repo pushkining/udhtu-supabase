@@ -327,6 +327,9 @@ td.actions-td{display:flex;gap:.4rem;}
       <div class="nav-item" data-page="records">
         <span class="nav-icon">◧</span> Записи
       </div>
+      <div class="nav-item" data-page="forecast">
+        <span class="nav-icon">◎</span> Прогноз
+      </div>
       <div class="nav-item admin-only hidden" data-page="users">
         <span class="nav-icon">◉</span> Користувачі
       </div>
@@ -476,13 +479,14 @@ function navigateTo(page){
   document.querySelectorAll('.nav-item').forEach(el=>{
     el.classList.toggle('active', el.dataset.page===page);
   });
-  const titles={dashboard:'DASHBOARD',records:'ЗАПИСИ',users:'КОРИСТУВАЧІ'};
+  const titles={dashboard:'DASHBOARD',records:'ЗАПИСИ',users:'КОРИСТУВАЧІ',forecast:'ПРОГНОЗ'};
   document.getElementById('page-title').textContent = titles[page]||page.toUpperCase();
   const content = document.getElementById('main-content');
   content.innerHTML='<div class="loader">Завантаження</div>';
   if(page==='dashboard') renderDashboard();
   else if(page==='records') renderRecords();
   else if(page==='users') renderUsers();
+  else if(page==='forecast') renderForecast();
 }
 
 // ─── DASHBOARD ───
@@ -629,6 +633,48 @@ const INPUT_FIELDS = [
   {key:'true_cardio',label:'True Cardio',type:'number',step:'0.0001',group:'true'},
 ];
 
+// ─── COEFFICIENTS ───
+const COEFFS = {
+  tacmed:     {intercept:0,      beta_c:0.241735, beta_f:0,          beta_d:6.880236},
+  painkiller: {intercept:64.228245, beta_c:0.055056, beta_f:0,       beta_d:2.579936},
+  antibiot:   {intercept:-3.907140, beta_c:0.030527, beta_f:580.381877, beta_d:0.890014},
+  lung:       {intercept:24.655498, beta_c:0,       beta_f:223.810119, beta_d:0},
+  digest:     {intercept:47.868949, beta_c:0.011502, beta_f:87.258060,  beta_d:0},
+  cardio:     {intercept:39.050825, beta_c:0.004923, beta_f:25.392452,  beta_d:0},
+};
+
+function calcTrue(vals){
+  const ec    = parseFloat(vals.e_c)    || 0;
+  const ireal = parseFloat(vals.i_real) || 0;
+  const ddrone= parseFloat(vals.d_drone)|| 0;
+  const res = {};
+  for(const [grp, c] of Object.entries(COEFFS)){
+    res[`true_${grp}`] = Math.max(0, c.intercept + c.beta_c*ec + c.beta_f*ireal + c.beta_d*ddrone);
+  }
+  return res;
+}
+
+function bindCalcTriggers(){
+  const triggers = ['e_c','i_real','d_drone'];
+  triggers.forEach(key=>{
+    const el = document.getElementById(`f_${key}`);
+    if(el) el.addEventListener('input', updateTrueFields);
+  });
+}
+
+function updateTrueFields(){
+  const vals = {
+    e_c:     document.getElementById('f_e_c')?.value,
+    i_real:  document.getElementById('f_i_real')?.value,
+    d_drone: document.getElementById('f_d_drone')?.value,
+  };
+  const result = calcTrue(vals);
+  for(const [key, val] of Object.entries(result)){
+    const el = document.getElementById(`f_${key}`);
+    if(el) el.value = val.toFixed(4);
+  }
+}
+
 function buildFormHTML(record=null){
   let html=`<div class="form-grid">`;
   html+=`<div class="section-divider">// Вхідні параметри</div>`;
@@ -641,18 +687,120 @@ function buildFormHTML(record=null){
         value="${val}" placeholder="${val===''?'null':''}"/>
     </div>`;
   });
-  html+=`<div class="section-divider">// True значення</div>`;
+  html+=`<div class="section-divider">// True значення (авто)</div>`;
   INPUT_FIELDS.filter(f=>f.group==='true').forEach(f=>{
     const val = record?.[f.key]??'';
     html+=`<div class="form-group">
       <label>${f.label}</label>
       <input type="${f.type}" id="f_${f.key}" name="${f.key}"
-        ${f.step?`step="${f.step}"`:''}
-        value="${val}" placeholder="${val===''?'null':''}"/>
+        readonly style="color:var(--accent);opacity:.8;cursor:not-allowed;"
+        value="${val}" placeholder="—"/>
     </div>`;
   });
   html+=`</div>`;
   return html;
+}
+
+// ─── FORECAST PAGE ───
+function renderForecast(){
+  const groups = Object.keys(COEFFS);
+  const content = document.getElementById('main-content');
+  content.innerHTML = `
+    <div style="max-width:700px;">
+      <div class="section-header" style="margin-bottom:1.2rem;">
+        <span class="section-title">КАЛЬКУЛЯТОР ПРОГНОЗУ</span>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent3);padding:1.5rem;margin-bottom:1.5rem;">
+        <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent3);margin-bottom:1rem;">// Введіть параметри</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>E_c (Індекс бойового тиску)</label>
+            <input type="number" id="fc_ec" step="0.01" placeholder="combat × w_scale × k_prior"/>
+          </div>
+          <div class="form-group">
+            <label>I_real (Епідемічний індекс)</label>
+            <input type="number" id="fc_ireal" step="0.000001" placeholder="flu × c_mob × k_pharm / pop×10⁶"/>
+          </div>
+          <div class="form-group full">
+            <label>D_drone (Індекс ескалації БПЛА)</label>
+            <input type="number" id="fc_ddrone" step="0.000001" placeholder="0.0 — 2.0"/>
+          </div>
+        </div>
+        <button class="btn-add" id="fc-calc-btn" style="margin-top:.5rem;">// РОЗРАХУВАТИ</button>
+      </div>
+
+      <div id="fc-results" class="hidden">
+        <div class="section-header" style="margin-bottom:.8rem;">
+          <span class="section-title">РЕЗУЛЬТАТИ</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;" id="fc-cards"></div>
+        <div style="margin-top:1rem;font-size:.6rem;color:var(--muted);letter-spacing:.06em;">
+          μ = max(0, α + β_c·E_c + β_f·I_real + β_d·D_drone)
+        </div>
+        <div id="fc-save-bar" class="hidden" style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem;">
+          <button class="btn-add" id="fc-save-btn">// ЗБЕРЕГТИ ЗАПИС</button>
+          <span style="font-size:.65rem;color:var(--muted);letter-spacing:.06em;">Відкриє форму з заповненими true_* полями</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('fc-calc-btn').addEventListener('click', ()=>{
+    const ec     = parseFloat(document.getElementById('fc_ec').value)    || 0;
+    const ireal  = parseFloat(document.getElementById('fc_ireal').value)  || 0;
+    const ddrone = parseFloat(document.getElementById('fc_ddrone').value) || 0;
+    const results = calcTrue({e_c:ec, i_real:ireal, d_drone:ddrone});
+
+    const labels = {
+      true_tacmed:'Tacmed', true_painkiller:'Painkiller',
+      true_antibiot:'Antibiot', true_lung:'Lung',
+      true_digest:'Digest', true_cardio:'Cardio'
+    };
+
+    let cards = '';
+    for(const [key, val] of Object.entries(results)){
+      cards += `
+        <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);padding:1rem;">
+          <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--label);margin-bottom:.4rem;">${labels[key]}</div>
+          <div style="font-family:var(--display);font-size:1.8rem;color:var(--accent);">${val.toFixed(2)}</div>
+          <div style="font-size:.6rem;color:var(--muted);margin-top:.2rem;">true_${key.replace('true_','')}</div>
+        </div>`;
+    }
+    document.getElementById('fc-cards').innerHTML = cards;
+    document.getElementById('fc-results').classList.remove('hidden');
+
+    // кнопка збереження — тільки для editor і admin
+    const saveBar = document.getElementById('fc-save-bar');
+    if(currentRole === 'editor' || currentRole === 'admin'){
+      saveBar.classList.remove('hidden');
+      document.getElementById('fc-save-btn').onclick = async () => {
+        // відкриваємо модалку з передзаповненими true_* полями
+        openAddModalWithTrue(results, ec, ireal, ddrone);
+      };
+    }
+  });
+}
+
+function openAddModalWithTrue(trueVals, ec, ireal, ddrone){
+  // передаємо prefill з вже відомими true_* і драйверами
+  const prefill = { e_c: ec, i_real: ireal, d_drone: ddrone, ...trueVals };
+  document.getElementById('modal-title').textContent = 'НОВИЙ ЗАПИС // true_* заповнено';
+  document.getElementById('modal-body').innerHTML = buildFormHTML(prefill);
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn-sm" id="modal-cancel-btn">Скасувати</button>
+    <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
+  `;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  bindCalcTriggers();
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-save-btn').addEventListener('click', async () => {
+    const vals = getFormValues();
+    const {error} = await sb.from('records').insert([vals]);
+    if(error){ showToast('Помилка: ' + error.message, true); return; }
+    showToast('Запис збережено!');
+    closeModal();
+    navigateTo('records');
+  });
 }
 
 function getFormValues(){
@@ -676,6 +824,7 @@ function openAddModal(){
     <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
   `;
   document.getElementById('modal-overlay').classList.remove('hidden');
+  bindCalcTriggers();
   document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
   document.getElementById('modal-save-btn').addEventListener('click', async ()=>{
     const vals=getFormValues();
@@ -697,6 +846,7 @@ async function openEditModal(id){
     <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
   `;
   document.getElementById('modal-overlay').classList.remove('hidden');
+  bindCalcTriggers();
   document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
   document.getElementById('modal-save-btn').addEventListener('click', async ()=>{
     const vals=getFormValues();
