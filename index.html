@@ -3,923 +3,734 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DIPLOM // ADMIN</title>
+<title>DIPLOM // DIGITAL TWIN SYSTEM</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #080a0f;
-  --surface: #0e1118;
-  --surface2: #141820;
-  --border: #1e2333;
-  --border2: #2a3045;
-  --accent: #00e5a0;
-  --accent-dim: rgba(0,229,160,0.12);
-  --accent2: #ff4560;
-  --accent3: #4d9fff;
-  --text: #c9d1e0;
-  --muted: #4a5268;
-  --label: #6b7a99;
-  --mono: 'Share Tech Mono', monospace;
-  --display: 'Bebas Neue', sans-serif;
-  --danger: #ff4560;
-  --warning: #ffb830;
-  --success: #00e5a0;
+  --bg:#080a0f; --surface:#0e1118; --surface2:#141820; --border:#1e2333;
+  --accent:#00e5a0; --accent-dim:rgba(0,229,160,0.12); --accent2:#ff4560;
+  --accent3:#4d9fff; --text:#c9d1e0; --muted:#4a5268; --label:#6b7a99;
+  --mono:'Share Tech Mono',monospace; --display:'Bebas Neue',sans-serif;
+  --warning:#ffb830;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:20px;}
 
-/* SCANLINES */
-body::before{
-  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
-}
-
-/* ─── LAYOUT ─── */
-#app{display:flex;height:100vh;overflow:hidden;}
-
-/* ─── SIDEBAR ─── */
-.sidebar{
-  width:220px;min-width:220px;background:var(--surface);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  padding:0;
-}
-.sidebar-logo{
-  padding:1.5rem 1.2rem 1rem;
-  border-bottom:1px solid var(--border);
-}
-.sidebar-logo h1{font-family:var(--display);font-size:2rem;letter-spacing:.1em;color:#fff;}
-.sidebar-logo span{font-size:.6rem;letter-spacing:.18em;color:var(--accent);text-transform:uppercase;}
-.sidebar-nav{flex:1;padding:.8rem 0;}
-.nav-item{
-  display:flex;align-items:center;gap:.7rem;
-  padding:.65rem 1.2rem;cursor:pointer;
-  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--label);border-left:2px solid transparent;
-  transition:all .15s;
-}
-.nav-item:hover{color:var(--text);background:var(--accent-dim);}
-.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim);}
-.nav-icon{font-size:1rem;width:18px;text-align:center;}
-.sidebar-user{
-  padding:1rem 1.2rem;border-top:1px solid var(--border);
-  font-size:.65rem;letter-spacing:.08em;
-}
-.sidebar-user .user-email{color:var(--text);margin-bottom:.3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sidebar-user .user-role{
-  display:inline-block;padding:1px 6px;font-size:.6rem;
-  letter-spacing:.1em;text-transform:uppercase;border:1px solid;margin-bottom:.6rem;
-}
-.role-admin{color:var(--accent2);border-color:var(--accent2);}
-.role-editor{color:var(--accent3);border-color:var(--accent3);}
-.role-viewer{color:var(--muted);border-color:var(--muted);}
-.btn-logout{
-  background:transparent;border:1px solid var(--border2);color:var(--muted);
-  padding:.35rem .7rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
-  text-transform:uppercase;cursor:pointer;width:100%;transition:all .15s;
-}
-.btn-logout:hover{border-color:var(--danger);color:var(--danger);}
-
-/* ─── MAIN ─── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{
-  height:48px;min-height:48px;background:var(--surface);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 1.5rem;
-}
-.topbar-title{font-family:var(--display);font-size:1.4rem;letter-spacing:.1em;color:#fff;}
-.topbar-meta{font-size:.65rem;color:var(--muted);letter-spacing:.08em;}
-.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:.4rem;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-
-.content{flex:1;overflow-y:auto;padding:1.5rem;}
-
-/* ─── LOGIN ─── */
-#login-screen{
-  display:flex;align-items:center;justify-content:center;
-  height:100vh;background:var(--bg);
-}
-.login-card{
-  width:380px;background:var(--surface);
-  border:1px solid var(--border);border-top:3px solid var(--accent);
-  padding:2.5rem;position:relative;
-}
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.login-card{width:380px;background:var(--surface);border:1px solid var(--border);
+  border-top:3px solid var(--accent);padding:2.5rem;position:relative;}
 .login-card::after{content:'';position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--accent);}
 .login-logo{margin-bottom:2rem;}
 .login-logo h1{font-family:var(--display);font-size:3rem;letter-spacing:.1em;color:#fff;}
 .login-logo p{font-size:.65rem;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;}
-.form-group{margin-bottom:1.2rem;}
-.form-group label{display:block;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--label);margin-bottom:.4rem;}
-.form-group input{
-  width:100%;background:var(--bg);border:1px solid var(--border2);
-  color:var(--text);font-family:var(--mono);font-size:.82rem;
-  padding:.6rem .8rem;outline:none;transition:border-color .15s;
-}
+.login-error{background:rgba(255,69,96,.08);border:1px solid rgba(255,69,96,.3);color:var(--accent2);
+  padding:.5rem .7rem;font-size:.75rem;margin-bottom:1rem;display:none;}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:1rem;}
+.login-field label{color:var(--label);font-size:.7rem;text-transform:uppercase;letter-spacing:1px;}
+.login-field input{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  padding:10px;font-family:var(--mono);outline:none;transition:border-color .15s;}
+.login-field input:focus{border-color:var(--accent);}
+.login-toggle{margin-top:1rem;text-align:center;font-size:.72rem;color:var(--label);}
+.login-toggle a{color:var(--accent);cursor:pointer;}
+
+/* ── TOPBAR ── */
+#app-screen{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.topbar-left h1{font-family:var(--display);font-size:2rem;color:var(--accent);letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:.72rem;}
+.user-badge{color:var(--label);}
+.user-badge span{color:var(--text);}
+.role-badge{padding:2px 8px;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid;}
+.role-admin{color:var(--accent2);border-color:var(--accent2);}
+.role-editor{color:var(--accent3);border-color:var(--accent3);}
+.role-viewer{color:var(--muted);border-color:var(--muted);}
+.btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:6px 14px;font-family:var(--mono);font-size:.65rem;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-logout:hover{border-color:var(--accent2);color:var(--accent2);}
+
+/* ── TABS ── */
+.main-nav{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid var(--border);padding-bottom:10px;}
+.nav-btn{background:var(--surface);color:var(--text);border:1px solid var(--border);
+  padding:10px 22px;cursor:pointer;font-family:var(--display);font-size:1.3rem;transition:.2s;}
+.nav-btn.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+.nav-btn:hover:not(.active){border-color:var(--accent3);color:var(--accent3);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);padding:25px;margin-bottom:20px;position:relative;}
+.card::before{content:"";position:absolute;top:0;left:0;width:2px;height:100%;background:var(--accent);}
+.card-title{font-family:var(--display);font-size:1.5rem;margin-bottom:15px;letter-spacing:.05em;}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{color:var(--label);font-size:.7rem;text-transform:uppercase;letter-spacing:1px;}
+.form-group input{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  padding:10px;font-family:var(--mono);outline:none;transition:border-color .15s;}
 .form-group input:focus{border-color:var(--accent);}
-.btn-primary{
-  width:100%;background:var(--accent);color:#080a0f;
-  border:none;padding:.75rem;font-family:var(--display);
-  font-size:1.1rem;letter-spacing:.15em;cursor:pointer;
-  transition:opacity .15s;margin-top:.5rem;
-}
-.btn-primary:hover{opacity:.85;}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
-.login-toggle{
-  margin-top:1rem;text-align:center;font-size:.68rem;
-  color:var(--label);letter-spacing:.06em;
-}
-.login-toggle a{color:var(--accent);cursor:pointer;text-decoration:none;}
-.login-toggle a:hover{text-decoration:underline;}
-.error-msg{
-  background:rgba(255,69,96,.08);border:1px solid rgba(255,69,96,.3);
-  color:var(--danger);padding:.5rem .7rem;font-size:.7rem;
-  letter-spacing:.05em;margin-bottom:1rem;display:none;
-}
+.form-group input[readonly]{color:var(--accent);cursor:not-allowed;background:rgba(0,229,160,0.04);}
+.section-label{grid-column:1/-1;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);padding-bottom:5px;border-bottom:1px solid var(--border);margin-top:5px;}
+.section-label.green{color:var(--accent);}
+.section-label.blue{color:var(--accent3);}
 
-/* ─── STATS ─── */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
-.stat-card{
-  background:var(--surface);border:1px solid var(--border);
-  padding:1rem 1.2rem;position:relative;overflow:hidden;
-}
-.stat-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--accent);
-}
-.stat-card.danger::before{background:var(--accent2);}
-.stat-card.info::before{background:var(--accent3);}
-.stat-card.warn::before{background:var(--warning);}
-.stat-label{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--label);margin-bottom:.4rem;}
-.stat-value{font-family:var(--display);font-size:2rem;letter-spacing:.05em;color:#fff;line-height:1;}
-.stat-sub{font-size:.6rem;color:var(--muted);margin-top:.3rem;letter-spacing:.06em;}
+details{margin-top:15px;padding:15px;background:var(--surface2);border:1px dashed var(--muted);}
+summary{cursor:pointer;color:var(--accent3);font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
 
-/* ─── TABLE ─── */
-.section-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:.8rem;
-}
-.section-title{
-  font-family:var(--display);font-size:1.3rem;letter-spacing:.1em;color:#fff;
-}
-.section-actions{display:flex;gap:.6rem;align-items:center;}
-.btn-sm{
-  background:transparent;border:1px solid var(--border2);color:var(--label);
-  padding:.35rem .8rem;font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;
-  text-transform:uppercase;cursor:pointer;transition:all .15s;
-}
+/* ── BUTTONS ── */
+.btn{background:var(--accent);color:#000;border:none;padding:15px;cursor:pointer;
+  font-family:var(--display);font-size:1.3rem;width:100%;transition:.2s;margin-top:15px;}
+.btn:hover{background:#fff;box-shadow:0 0 20px var(--accent-dim);}
+.btn:disabled{opacity:.4;cursor:not-allowed;background:var(--accent);}
+.btn-sm{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:5px 14px;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;cursor:pointer;transition:.15s;}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent);}
-.btn-sm.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
-.btn-sm.danger:hover{border-color:var(--danger);color:var(--danger);}
-.btn-add{
-  background:var(--accent);color:#080a0f;border:none;
-  padding:.35rem .8rem;font-family:var(--mono);font-size:.65rem;
-  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;
-}
-.btn-add:hover{opacity:.85;}
+.btn-save{background:var(--accent);color:#000;border:none;padding:6px 16px;
+  font-family:var(--display);font-size:1rem;cursor:pointer;transition:.2s;}
+.btn-save:hover{background:#fff;}
+.btn-danger{background:transparent;border:1px solid var(--accent2);color:var(--accent2);
+  padding:5px 12px;font-family:var(--mono);font-size:.7rem;cursor:pointer;transition:.15s;}
+.btn-danger:hover{background:rgba(255,69,96,.1);}
 
-.table-wrap{
-  background:var(--surface);border:1px solid var(--border);
-  overflow-x:auto;
-}
-table{width:100%;border-collapse:collapse;}
-thead tr{border-bottom:1px solid var(--border2);}
-th{
-  padding:.6rem .8rem;text-align:left;font-size:.6rem;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--label);
-  white-space:nowrap;background:var(--surface2);
-}
-th.sortable{cursor:pointer;}
-th.sortable:hover{color:var(--accent);}
-tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+/* ── TABLE ── */
+.table-container{overflow-x:auto;margin-top:10px;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+th{color:var(--label);font-size:.65rem;text-transform:uppercase;border-top:1px solid var(--border);background:var(--surface2);}
+th.th-true{color:var(--accent);}
+td.td-date{color:var(--accent3);}
+td.td-num{color:var(--warning);}
+td.td-true{color:var(--accent);font-weight:bold;}
+td.td-muted{color:var(--muted);font-style:italic;}
 tbody tr:hover{background:var(--accent-dim);}
-td{padding:.55rem .8rem;font-size:.78rem;white-space:nowrap;color:var(--text);}
-td.num{color:var(--accent);font-size:.75rem;}
-td.null-val{color:var(--muted);font-style:italic;}
-td.date-val{color:var(--accent3);}
-td.actions-td{display:flex;gap:.4rem;}
-.btn-icon{
-  background:transparent;border:1px solid var(--border2);
-  color:var(--muted);padding:.2rem .5rem;font-family:var(--mono);
-  font-size:.65rem;cursor:pointer;transition:all .15s;
-}
-.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
-.btn-icon.del:hover{border-color:var(--danger);color:var(--danger);}
 
-/* ─── PAGINATION ─── */
-.pagination{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.8rem 1rem;border-top:1px solid var(--border);
-  background:var(--surface);
-}
-.page-info{font-size:.65rem;color:var(--muted);letter-spacing:.06em;}
-.page-btns{display:flex;gap:.4rem;}
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;margin-top:10px;font-size:.72rem;color:var(--muted);}
+.page-btns{display:flex;gap:8px;}
 
-/* ─── MODAL ─── */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(8,10,15,.85);
-  display:flex;align-items:center;justify-content:center;z-index:1000;
-  backdrop-filter:blur(2px);
-}
-.modal{
-  background:var(--surface);border:1px solid var(--border2);
-  border-top:3px solid var(--accent);width:680px;max-width:95vw;
-  max-height:88vh;display:flex;flex-direction:column;position:relative;
-}
-.modal::after{content:'';position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--accent);}
-.modal-header{
-  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.modal-title{font-family:var(--display);font-size:1.4rem;letter-spacing:.1em;color:#fff;}
-.btn-close{
-  background:transparent;border:none;color:var(--muted);
-  font-size:1.2rem;cursor:pointer;padding:.2rem .4rem;
-  transition:color .15s;
-}
-.btn-close:hover{color:var(--danger);}
-.modal-body{padding:1.5rem;overflow-y:auto;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
-.form-grid .full{grid-column:1/-1;}
-.modal-footer{
-  padding:1rem 1.5rem;border-top:1px solid var(--border);
-  display:flex;justify-content:flex-end;gap:.8rem;flex-shrink:0;
-}
-.section-divider{
-  grid-column:1/-1;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:.4rem;margin-top:.5rem;
-}
-
-/* ─── USERS PAGE ─── */
-.users-table{width:100%;}
-.role-select{
-  background:var(--bg);border:1px solid var(--border2);color:var(--text);
-  font-family:var(--mono);font-size:.72rem;padding:.25rem .5rem;outline:none;
-}
-.role-select:focus{border-color:var(--accent);}
-
-/* ─── TOAST ─── */
-.toast{
-  position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;
-  background:var(--surface);border:1px solid var(--border2);
-  border-left:3px solid var(--accent);padding:.7rem 1.2rem;
-  font-size:.72rem;letter-spacing:.06em;color:var(--text);
-  transform:translateX(120%);transition:transform .3s;max-width:300px;
-}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--surface);
+  border-left:3px solid var(--accent);border:1px solid var(--border);border-left-width:3px;
+  padding:12px 18px;font-size:.75rem;transform:translateX(120%);transition:transform .3s;max-width:280px;}
 .toast.show{transform:translateX(0);}
-.toast.error{border-left-color:var(--danger);}
-
-/* ─── LOADER ─── */
-.loader{text-align:center;padding:2rem;color:var(--muted);font-size:.72rem;letter-spacing:.1em;}
-.loader::after{content:'...';animation:dots 1.2s infinite;}
-@keyframes dots{0%{content:'.';}33%{content:'..';}66%{content:'...';}100%{content:'';}}
-
-/* ─── EMPTY ─── */
-.empty{text-align:center;padding:3rem;color:var(--muted);font-size:.72rem;letter-spacing:.08em;}
-
-/* ─── SCROLLBAR ─── */
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--border2);}
-::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+.toast.error{border-left-color:var(--accent2);}
 
 .hidden{display:none!important;}
+.role-select{background:var(--bg);color:var(--text);border:1px solid var(--border);
+  padding:5px 8px;font-family:var(--mono);font-size:.75rem;outline:none;}
+  
+/* Додаток для кнопок аналітики */
+.filter-btn-group { display: flex; gap: 15px; margin-top: 15px; margin-bottom: 25px; }
+.btn-export { background: var(--accent3); }
+.btn-export:hover { box-shadow: 0 0 20px rgba(77, 159, 255, 0.4); }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
       <h1>DIPLOM</h1>
-      <p>Admin Interface // v1.0</p>
+      <p>Digital Twin System // Auth</p>
     </div>
-    <div class="error-msg" id="auth-error"></div>
-    <div class="form-group">
+    <div class="login-error" id="login-error"></div>
+    <div class="login-field">
       <label>Email</label>
-      <input type="email" id="login-email" placeholder="user@example.com" autocomplete="email"/>
+      <input type="email" id="l-email" placeholder="user@example.com"/>
     </div>
-    <div class="form-group">
+    <div class="login-field">
       <label>Пароль</label>
-      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/>
+      <input type="password" id="l-pass" placeholder="••••••••"/>
     </div>
-    <button class="btn-primary" id="login-btn">// УВІЙТИ</button>
-    <div class="login-toggle">
-      Немає акаунту? <a id="toggle-mode">Зареєструватись</a>
+    <button class="btn" id="login-btn" style="font-size:1.3rem">УВІЙТИ</button>
+    <div class="login-toggle">Немає акаунту? <a id="toggle-reg">Зареєструватись</a></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>SYSTEM // DIGITAL TWIN</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge">Користувач: <span id="u-email">—</span></div>
+      <div class="role-badge" id="u-role-badge">viewer</div>
+      <button class="btn-logout" id="logout-btn">ВИЙТИ</button>
+    </div>
+  </div>
+
+  <div class="main-nav">
+    <button class="nav-btn active" data-tab="tab-dashboard">ДАШБОРД</button>
+    <button class="nav-btn" data-tab="tab-records">ВСІ ЗАПИСИ</button>
+    <button class="nav-btn editor-only hidden" data-tab="tab-input">ВВЕДЕННЯ</button>
+    <button class="nav-btn" data-tab="tab-forecast">ПРОГНОЗ (АНАЛІТИКА)</button>
+    <button class="nav-btn admin-only hidden" data-tab="tab-users">КОРИСТУВАЧІ</button>
+  </div>
+
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="card">
+      <div class="card-title">ОСТАННІ 10 ЗАПИСІВ // Ledger / <span style="color:var(--accent)">True</span></div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th><th>Тактика</th><th>Бойові</th><th>Грип</th>
+              <th class="th-true">Tacmed L/T</th>
+              <th class="th-true">Painkiller L/T</th>
+              <th class="th-true">Antibiot L/T</th>
+              <th class="th-true">Lung L/T</th>
+              <th class="th-true">Digest L/T</th>
+              <th class="th-true">Cardio L/T</th>
+            </tr>
+          </thead>
+          <tbody id="dash-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-records" class="tab-content">
+    <div class="card">
+      <div class="card-title">ВСІ ЗАПИСИ</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Дата</th><th>Тактика</th><th>Бойові</th><th>W Scale</th><th>Грип</th>
+              <th>Tacmed</th><th>Painkiller</th><th>Antibiot</th><th>Lung</th><th>Digest</th><th>Cardio</th><th>Equip</th>
+              <th class="th-true">T.Tacmed</th><th class="th-true">T.Pain</th><th class="th-true">T.Anti</th>
+              <th class="th-true">T.Lung</th><th class="th-true">T.Digest</th><th class="th-true">T.Cardio</th>
+              <th class="admin-only hidden">Дії</th>
+            </tr>
+          </thead>
+          <tbody id="records-body"><tr><td colspan="19" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="page-info">—</span>
+        <div class="page-btns">
+          <button class="btn-sm" id="pg-prev">← ПОПЕРЕДНЯ</button>
+          <button class="btn-sm" id="pg-next">НАСТУПНА →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-input" class="tab-content">
+    <div class="card">
+      <div class="card-title">ВВЕДЕННЯ ПАРАМЕТРІВ</div>
+      <div class="form-grid">
+        <div class="section-label blue full">// Основні дані</div>
+        <div class="form-group"><label>Дата</label><input type="date" id="i_date"/></div>
+        <div class="form-group"><label>W Scale</label><input type="number" id="i_wscale" step="0.01" value=""/></div>
+        <div class="form-group" style="grid-column:span 2"><label>Tactic Focus</label><input type="text" id="i_tactic" placeholder="напр. Positional_War_2026"/></div>
+        <div class="form-group"><label>Combat Cases</label><input type="number" id="i_combat" value=""/></div>
+        <div class="form-group"><label>Flu Cases</label><input type="number" id="i_flu" value=""/></div>
+
+        <div class="section-label full">// Медикаменти (журнал)</div>
+        <div class="form-group"><label>Tacmed</label><input type="number" id="i_tacmed" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Painkiller</label><input type="number" id="i_pain" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Antibiot</label><input type="number" id="i_anti" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Lung</label><input type="number" id="i_lung" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Digest</label><input type="number" id="i_digest" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Cardio</label><input type="number" id="i_cardio" step="0.01" value="0"/></div>
+        <div class="form-group"><label>Equip</label><input type="number" id="i_equip" step="0.01" value="0"/></div>
+      </div>
+
+      <details id="adv-details">
+        <summary>▶ РОЗШИРЕНІ ПАРАМЕТРИ (defaults)</summary>
+        <div class="form-grid" style="margin-top:10px">
+          <div class="form-group"><label>k_prior <span style="color:var(--muted)">(def 0.2)</span></label><input type="number" id="i_kprior" step="0.001" value="0.2"/></div>
+          <div class="form-group"><label>est_pop_mln <span style="color:var(--muted)">(def 31.8)</span></label><input type="number" id="i_pop" step="0.1" value="31.8"/></div>
+          <div class="form-group"><label>c_mob <span style="color:var(--muted)">(def 0.86)</span></label><input type="number" id="i_cmob" step="0.001" value="0.86"/></div>
+          <div class="form-group"><label>k_pharm <span style="color:var(--muted)">(def 0.96)</span></label><input type="number" id="i_kpharm" step="0.001" value="0.96"/></div>
+          <div class="form-group"><label>d_drone <span style="color:var(--muted)">(def 2.0)</span></label><input type="number" id="i_drone" step="0.001" value="2.0"/></div>
+        </div>
+      </details>
+
+      <div class="form-grid" style="margin-top:20px">
+        <div class="section-label green full">// Авторозрахунок (readonly)</div>
+        <div class="form-group"><label>E_c</label><input type="number" id="o_ec" readonly/></div>
+        <div class="form-group"><label>I_real</label><input type="number" id="o_ireal" readonly/></div>
+        <div class="form-group"><label>True Tacmed</label><input type="number" id="o_ttacmed" readonly/></div>
+        <div class="form-group"><label>True Painkiller</label><input type="number" id="o_tpain" readonly/></div>
+        <div class="form-group"><label>True Antibiot</label><input type="number" id="o_tanti" readonly/></div>
+        <div class="form-group"><label>True Lung</label><input type="number" id="o_tlung" readonly/></div>
+        <div class="form-group"><label>True Digest</label><input type="number" id="o_tdigest" readonly/></div>
+        <div class="form-group"><label>True Cardio</label><input type="number" id="o_tcardio" readonly/></div>
+      </div>
+
+      <button class="btn" id="save-btn">ЗБЕРЕГТИ В БАЗУ</button>
+    </div>
+  </div>
+
+  <div id="tab-forecast" class="tab-content">
+    <div class="card">
+      <div class="card-title">АНАЛІТИКА ТА ЕКСПОРТ (TRUE_*)</div>
+      
+      <div class="form-grid" style="margin-bottom: 10px;">
+        <div class="form-group"><label>З дати</label><input type="date" id="f-date-start"></div>
+        <div class="form-group"><label>По дату</label><input type="date" id="f-date-end"></div>
+        <div class="form-group"><label>Мін. Combat Cases</label><input type="number" id="f-combat-min" placeholder="0"></div>
+        <div class="form-group"><label>Макс. Combat Cases</label><input type="number" id="f-combat-max" placeholder="99999"></div>
+        <div class="form-group"><label>Мін. Flu Cases</label><input type="number" id="f-flu-min" placeholder="0"></div>
+        <div class="form-group"><label>Макс. Flu Cases</label><input type="number" id="f-flu-max" placeholder="99999"></div>
+      </div>
+      
+      <div class="filter-btn-group">
+        <button class="btn" id="btn-apply-filters" style="margin: 0;">ЗАСТОСУВАТИ ФІЛЬТР</button>
+        <button class="btn btn-export" id="btn-export-excel" style="margin: 0;">ЕКСПОРТ В EXCEL</button>
+      </div>
+
+      <div style="background: var(--surface2); padding: 15px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 25px;">
+         <div style="height: 350px; width: 100%;">
+            <canvas id="analyticsChart"></canvas>
+         </div>
+      </div>
+
+      <div class="section-label blue full">// ВІДФІЛЬТРОВАНІ ДАНІ</div>
+      <div class="table-container">
+        <table>
+           <thead>
+             <tr>
+               <th>Дата</th><th>Тактика</th><th>Combat</th><th>Flu</th>
+               <th class="th-true">Tacmed (T)</th>
+               <th class="th-true">Pain (T)</th>
+               <th class="th-true">Anti (T)</th>
+               <th class="th-true">Lung (T)</th>
+               <th class="th-true">Digest (T)</th>
+               <th class="th-true">Cardio (T)</th>
+             </tr>
+           </thead>
+           <tbody id="analytics-body">
+              <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Завантаження аналітики...</td></tr>
+           </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-users" class="tab-content">
+    <div class="card">
+      <div class="card-title">ПРОФІЛІ КОРИСТУВАЧІВ</div>
+      <div id="profiles-container"><p style="color:var(--muted)">Завантаження...</p></div>
     </div>
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="app" class="hidden">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-logo">
-      <h1>DIPLOM</h1>
-      <span>Admin Panel</span>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-item active" data-page="dashboard">
-        <span class="nav-icon">◈</span> Dashboard
-      </div>
-      <div class="nav-item" data-page="records">
-        <span class="nav-icon">◧</span> Записи
-      </div>
-      <div class="nav-item" data-page="forecast">
-        <span class="nav-icon">◎</span> Прогноз
-      </div>
-      <div class="nav-item admin-only hidden" data-page="users">
-        <span class="nav-icon">◉</span> Користувачі
-      </div>
-    </nav>
-    <div class="sidebar-user">
-      <div class="user-email" id="user-email-display">—</div>
-      <div class="user-role" id="user-role-display">viewer</div>
-      <button class="btn-logout" id="logout-btn">// вийти</button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <span class="topbar-title" id="page-title">DASHBOARD</span>
-      <span class="topbar-meta">
-        <span class="status-dot"></span>
-        SUPABASE CONNECTED // pushkining
-      </span>
-    </div>
-    <div class="content" id="main-content"></div>
-  </div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay hidden" id="modal-overlay">
-  <div class="modal" id="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">НОВИЙ ЗАПИС</span>
-      <button class="btn-close" id="modal-close">✕</button>
-    </div>
-    <div class="modal-body" id="modal-body"></div>
-    <div class="modal-footer" id="modal-footer"></div>
-  </div>
-</div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
+// ── CONFIG ──
 const SUPABASE_URL = 'https://ecadbdnawvujogtimhms.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjYWRiZG5hd3Z1am9ndGltaG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNjExNzEsImV4cCI6MjA5MzczNzE3MX0.-0Me6KeY_vOA6JkVvxkB7sumZ-M-jXTIVRhPyx2Pj7c';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── STATE ───
-let currentUser = null;
 let currentRole = 'viewer';
-let currentPage = 'dashboard';
-let recordsPage = 0;
+let recPage = 0;
 const PAGE_SIZE = 10;
 
-// ─── TOAST ───
-function showToast(msg, isError=false){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError?' error':'');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
-}
+// Змінні для Аналітики
+let rawAnalyticsData = [];
+let currentFilteredData = [];
+let analyticsChartInstance = null;
 
-// ─── AUTH ───
-let isRegMode = false;
-document.getElementById('toggle-mode').addEventListener('click', ()=>{
-  isRegMode = !isRegMode;
-  document.getElementById('login-btn').textContent = isRegMode ? '// ЗАРЕЄСТРУВАТИСЬ' : '// УВІЙТИ';
-  document.getElementById('toggle-mode').textContent = isRegMode ? 'Увійти' : 'Зареєструватись';
-  document.querySelector('.login-toggle').firstChild.textContent = isRegMode ? 'Вже є акаунт? ' : 'Немає акаунту? ';
-  document.getElementById('auth-error').style.display='none';
-});
-
-document.getElementById('login-btn').addEventListener('click', async ()=>{
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('auth-error');
-  const btn = document.getElementById('login-btn');
-  if(!email||!password){ errEl.textContent='Заповніть всі поля'; errEl.style.display='block'; return; }
-  btn.disabled=true; btn.textContent='...';
-  let res;
-  if(isRegMode){
-    res = await sb.auth.signUp({email, password});
-    if(res.error){ errEl.textContent=res.error.message; errEl.style.display='block'; btn.disabled=false; btn.textContent='// ЗАРЕЄСТРУВАТИСЬ'; return; }
-    // створюємо профіль одразу після реєстрації
-    if(res.data.user){
-      const {error: profileError} = await sb.from('profiles').insert({id: res.data.user.id, role: 'viewer'});
-      if(profileError && profileError.code !== '23505'){ // ігноруємо duplicate
-        errEl.textContent = 'Профіль не створено: ' + profileError.message;
-        errEl.style.display='block';
-        btn.disabled=false; btn.textContent='// ЗАРЕЄСТРУВАТИСЬ';
-        return;
-      }
-    }
-    errEl.style.display='none';
-    showToast('Реєстрація успішна! Тепер увійдіть.');
-    isRegMode=false;
-    btn.disabled=false;
-    btn.textContent='// УВІЙТИ';
-    document.getElementById('toggle-mode').textContent='Зареєструватись';
-    document.querySelector('.login-toggle').firstChild.textContent='Немає акаунту? ';
-    return;
-  } else {
-    res = await sb.auth.signInWithPassword({email, password});
-  }
-  if(res.error){ errEl.textContent=res.error.message; errEl.style.display='block'; btn.disabled=false; btn.textContent='// УВІЙТИ'; return; }
-  await initApp(res.data.user);
-});
-
-document.getElementById('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('login-btn').click(); });
-
-document.getElementById('logout-btn').addEventListener('click', async ()=>{
-  await sb.auth.signOut();
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login-screen').style.display='flex';
-  currentUser=null; currentRole='viewer';
-});
-
-async function initApp(user){
-  currentUser = user;
-  // get role
-  const {data:profile} = await sb.from('profiles').select('role').eq('id', user.id).single();
-  currentRole = profile?.role || 'viewer';
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('user-email-display').textContent = user.email;
-  const roleEl = document.getElementById('user-role-display');
-  roleEl.textContent = currentRole;
-  roleEl.className = `user-role role-${currentRole}`;
-  // show admin nav
-  if(currentRole==='admin'){
-    document.querySelectorAll('.admin-only').forEach(el=>el.classList.remove('hidden'));
-  }
-  navigateTo('dashboard');
-}
-
-// check existing session
-sb.auth.getSession().then(({data:{session}})=>{
-  if(session) initApp(session.user);
-});
-
-// ─── NAVIGATION ───
-document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
-  el.addEventListener('click', ()=>navigateTo(el.dataset.page));
-});
-
-function navigateTo(page){
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(el=>{
-    el.classList.toggle('active', el.dataset.page===page);
-  });
-  const titles={dashboard:'DASHBOARD',records:'ЗАПИСИ',users:'КОРИСТУВАЧІ',forecast:'ПРОГНОЗ'};
-  document.getElementById('page-title').textContent = titles[page]||page.toUpperCase();
-  const content = document.getElementById('main-content');
-  content.innerHTML='<div class="loader">Завантаження</div>';
-  if(page==='dashboard') renderDashboard();
-  else if(page==='records') renderRecords();
-  else if(page==='users') renderUsers();
-  else if(page==='forecast') renderForecast();
-}
-
-// ─── DASHBOARD ───
-async function renderDashboard(){
-  const {data, error} = await sb.from('records').select('*').order('date',{ascending:false}).limit(10);
-  const {count} = await sb.from('records').select('*',{count:'exact',head:true});
-  const content = document.getElementById('main-content');
-  if(error){ content.innerHTML=`<div class="empty">Помилка: ${error.message}</div>`; return; }
-  const latest = data[0];
-  content.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Всього записів</div>
-        <div class="stat-value">${count||0}</div>
-        <div class="stat-sub">в базі даних</div>
-      </div>
-      <div class="stat-card danger">
-        <div class="stat-label">Бойових випадків</div>
-        <div class="stat-value">${latest?.combat_cases??'—'}</div>
-        <div class="stat-sub">останній запис</div>
-      </div>
-      <div class="stat-card info">
-        <div class="stat-label">Flu Cases</div>
-        <div class="stat-value">${latest?.flu_cases?.toLocaleString()??'—'}</div>
-        <div class="stat-sub">останній запис</div>
-      </div>
-      <div class="stat-card warn">
-        <div class="stat-label">Останній запис</div>
-        <div class="stat-value" style="font-size:1.2rem;padding-top:.4rem">${latest?.date??'—'}</div>
-        <div class="stat-sub">${latest?.tactic_focus??''}</div>
-      </div>
-    </div>
-    <div class="section-header">
-      <span class="section-title">ОСТАННІ 10 ЗАПИСІВ</span>
-      ${(currentRole==='editor'||currentRole==='admin')?`<button class="btn-add" id="dash-add-btn">+ ДОДАТИ</button>`:''}
-    </div>
-    ${buildRecordsTable(data, false)}
-  `;
-  if(document.getElementById('dash-add-btn')) document.getElementById('dash-add-btn').addEventListener('click',()=>openAddModal());
-  bindTableActions();
-}
-
-// ─── RECORDS PAGE ───
-async function renderRecords(){
-  const from = recordsPage * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-  const {data, error, count} = await sb.from('records').select('*',{count:'exact'}).order('date',{ascending:false}).range(from, to);
-  const content = document.getElementById('main-content');
-  if(error){ content.innerHTML=`<div class="empty">Помилка: ${error.message}</div>`; return; }
-  const totalPages = Math.ceil((count||0)/PAGE_SIZE);
-  content.innerHTML = `
-    <div class="section-header">
-      <span class="section-title">ВСІ ЗАПИСИ</span>
-      <div class="section-actions">
-        ${(currentRole==='editor'||currentRole==='admin')?`<button class="btn-add" id="rec-add-btn">+ ДОДАТИ</button>`:''}
-      </div>
-    </div>
-    ${buildRecordsTable(data, true)}
-    <div class="pagination">
-      <span class="page-info">
-        Записів: ${count} // Сторінка ${recordsPage+1} з ${totalPages}
-      </span>
-      <div class="page-btns">
-        <button class="btn-sm" id="pg-prev" ${recordsPage===0?'disabled':''}>← ПОПЕРЕДНЯ</button>
-        <button class="btn-sm" id="pg-next" ${recordsPage>=totalPages-1?'disabled':''}>НАСТУПНА →</button>
-      </div>
-    </div>
-  `;
-  if(document.getElementById('rec-add-btn')) document.getElementById('rec-add-btn').addEventListener('click',()=>openAddModal());
-  document.getElementById('pg-prev')?.addEventListener('click',()=>{ recordsPage--; renderRecords(); });
-  document.getElementById('pg-next')?.addEventListener('click',()=>{ recordsPage++; renderRecords(); });
-  bindTableActions();
-}
-
-function buildRecordsTable(data, showAll){
-  if(!data||data.length===0) return '<div class="empty">Записів не знайдено</div>';
-  const cols = showAll
-    ? ['date','tactic_focus','combat_cases','flu_cases','est_pop_mln','e_c','i_real','d_drone','true_tacmed','true_cardio']
-    : ['date','tactic_focus','combat_cases','flu_cases','e_c','i_real','true_tacmed','true_cardio'];
-  const labels = {date:'Дата',tactic_focus:'Тактика',combat_cases:'Бойові',flu_cases:'Грип',est_pop_mln:'Населення',e_c:'E_c',i_real:'I_real',d_drone:'D_drone',true_tacmed:'T.Tacmed',true_cardio:'T.Cardio'};
-  const numCols = new Set(['combat_cases','flu_cases','est_pop_mln','e_c','i_real','d_drone','true_tacmed','true_cardio','w_scale','k_prior','c_mob','k_pharm']);
-  const canEdit = currentRole==='admin';
-  const canDel = currentRole==='admin';
-  let html = `<div class="table-wrap"><table><thead><tr>`;
-  cols.forEach(c=>{ html+=`<th>${labels[c]||c}</th>`; });
-  if(canEdit||canDel) html+=`<th>Дії</th>`;
-  html+=`</tr></thead><tbody>`;
-  data.forEach(row=>{
-    html+=`<tr>`;
-    cols.forEach(c=>{
-      const v = row[c];
-      if(v===null||v===undefined) html+=`<td class="null-val">null</td>`;
-      else if(c==='date') html+=`<td class="date-val">${v}</td>`;
-      else if(numCols.has(c)) html+=`<td class="num">${typeof v==='number'?v.toFixed(v%1===0?0:4):v}</td>`;
-      else html+=`<td>${v}</td>`;
-    });
-    if(canEdit||canDel){
-      html+=`<td class="actions-td">`;
-      if(canEdit) html+=`<button class="btn-icon edit-btn" data-id="${row.id}">✎</button>`;
-      if(canDel) html+=`<button class="btn-icon del del-btn" data-id="${row.id}">✕</button>`;
-      html+=`</td>`;
-    }
-    html+=`</tr>`;
-  });
-  html+=`</tbody></table></div>`;
-  return html;
-}
-
-function bindTableActions(){
-  document.querySelectorAll('.edit-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>openEditModal(btn.dataset.id));
-  });
-  document.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>deleteRecord(btn.dataset.id));
-  });
-}
-
-// ─── MODAL ───
-const INPUT_FIELDS = [
-  {key:'date',label:'Дата',type:'date',group:'input'},
-  {key:'tactic_focus',label:'Tactic Focus',type:'text',group:'input'},
-  {key:'combat_cases',label:'Combat Cases',type:'number',group:'input'},
-  {key:'w_scale',label:'W Scale',type:'number',step:'0.01',group:'input'},
-  {key:'k_prior',label:'K Prior',type:'number',step:'0.01',group:'input'},
-  {key:'flu_cases',label:'Flu Cases',type:'number',group:'input'},
-  {key:'est_pop_mln',label:'Est Pop (mln)',type:'number',step:'0.01',group:'input'},
-  {key:'c_mob',label:'C Mob',type:'number',step:'0.001',group:'input'},
-  {key:'k_pharm',label:'K Pharm',type:'number',step:'0.001',group:'input'},
-  {key:'e_c',label:'E_c',type:'number',step:'0.01',group:'input'},
-  {key:'i_real',label:'I Real',type:'number',step:'0.000001',group:'input'},
-  {key:'d_drone',label:'D Drone',type:'number',step:'0.000001',group:'input'},
-  {key:'digest',label:'Digest',type:'number',step:'0.01',group:'input'},
-  {key:'tacmed',label:'Tacmed',type:'number',step:'0.01',group:'input'},
-  {key:'painkiller',label:'Painkiller',type:'number',step:'0.01',group:'input'},
-  {key:'lung',label:'Lung',type:'number',step:'0.01',group:'input'},
-  {key:'antibiot',label:'Antibiot',type:'number',step:'0.01',group:'input'},
-  {key:'cardio',label:'Cardio',type:'number',step:'0.01',group:'input'},
-  {key:'equip',label:'Equip',type:'number',step:'0.01',group:'input'},
-  {key:'true_tacmed',label:'True Tacmed',type:'number',step:'0.0001',group:'true'},
-  {key:'true_painkiller',label:'True Painkiller',type:'number',step:'0.0001',group:'true'},
-  {key:'true_antibiot',label:'True Antibiot',type:'number',step:'0.0001',group:'true'},
-  {key:'true_lung',label:'True Lung',type:'number',step:'0.0001',group:'true'},
-  {key:'true_digest',label:'True Digest',type:'number',step:'0.0001',group:'true'},
-  {key:'true_cardio',label:'True Cardio',type:'number',step:'0.0001',group:'true'},
-];
-
-// ─── COEFFICIENTS ───
+// ── COEFFICIENTS (Vol_2025) ──
 const COEFFS = {
-  tacmed:     {intercept:0,      beta_c:0.241735, beta_f:0,          beta_d:6.880236},
-  painkiller: {intercept:64.228245, beta_c:0.055056, beta_f:0,       beta_d:2.579936},
-  antibiot:   {intercept:-3.907140, beta_c:0.030527, beta_f:580.381877, beta_d:0.890014},
-  lung:       {intercept:24.655498, beta_c:0,       beta_f:223.810119, beta_d:0},
-  digest:     {intercept:47.868949, beta_c:0.011502, beta_f:87.258060,  beta_d:0},
-  cardio:     {intercept:39.050825, beta_c:0.004923, beta_f:25.392452,  beta_d:0},
+  tacmed:     { intercept:0,         beta_c:0.241735, beta_f:0,          beta_d:6.880236, vol:0.097516 },
+  painkiller: { intercept:64.228245, beta_c:0.055056, beta_f:0,          beta_d:2.579936, vol:0.093323 },
+  antibiot:   { intercept:-3.907140, beta_c:0.030527, beta_f:580.381877, beta_d:0.890014, vol:0.123410 },
+  lung:       { intercept:24.655498, beta_c:0,        beta_f:223.810119, beta_d:0,        vol:0.123134 },
+  digest:     { intercept:47.868949, beta_c:0.011502, beta_f:87.258060,  beta_d:0,        vol:0.145755 },
+  cardio:     { intercept:39.050825, beta_c:0.004923, beta_f:25.392452,  beta_d:0,        vol:0.099910 },
 };
 
-function calcTrue(vals){
-  const ec    = parseFloat(vals.e_c)    || 0;
-  const ireal = parseFloat(vals.i_real) || 0;
-  const ddrone= parseFloat(vals.d_drone)|| 0;
-  const res = {};
-  for(const [grp, c] of Object.entries(COEFFS)){
-    res[`true_${grp}`] = Math.max(0, c.intercept + c.beta_c*ec + c.beta_f*ireal + c.beta_d*ddrone);
+// ── BOX-MULLER ──
+function randomNormal(mean, stdDev) {
+  let u1 = Math.random(), u2 = Math.random();
+  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+  return z0 * stdDev + mean;
+}
+
+// ── FORMULA CHAIN ──
+function calcAll(p) {
+  const e_c    = (p.combat_cases||0) * (p.w_scale||0) * (p.k_prior||0.2);
+  const i_real = ((p.flu_cases||0) * (p.c_mob||0.86) * (p.k_pharm||0.96)) / ((p.est_pop_mln||31.8) * 1e6);
+  const res    = { e_c: parseFloat(e_c.toFixed(4)), i_real: parseFloat(i_real.toFixed(6)) };
+  for (const [grp, c] of Object.entries(COEFFS)) {
+    const mu    = Math.max(0, c.intercept + c.beta_c*e_c + c.beta_f*i_real + c.beta_d*(p.d_drone||2.0));
+    const mean  = mu * (1 - c.vol);
+    const sigma = mean * 0.05;
+    res[`true_${grp}`] = parseFloat(Math.max(0, randomNormal(mean, sigma)).toFixed(4));
   }
   return res;
 }
 
-function bindCalcTriggers(){
-  const triggers = ['e_c','i_real','d_drone'];
-  triggers.forEach(key=>{
-    const el = document.getElementById(`f_${key}`);
-    if(el) el.addEventListener('input', updateTrueFields);
-  });
+// ── TOAST ──
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err?' error':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
 }
 
-function updateTrueFields(){
-  const vals = {
-    e_c:     document.getElementById('f_e_c')?.value,
-    i_real:  document.getElementById('f_i_real')?.value,
-    d_drone: document.getElementById('f_d_drone')?.value,
-  };
-  const result = calcTrue(vals);
-  for(const [key, val] of Object.entries(result)){
-    const el = document.getElementById(`f_${key}`);
-    if(el) el.value = val.toFixed(4);
+// ── AUTH ──
+let isReg = false;
+document.getElementById('toggle-reg').addEventListener('click', ()=>{
+  isReg = !isReg;
+  document.getElementById('login-btn').textContent = isReg ? 'ЗАРЕЄСТРУВАТИСЬ' : 'УВІЙТИ';
+  document.getElementById('toggle-reg').textContent = isReg ? 'Увійти' : 'Зареєструватись';
+  document.querySelector('.login-toggle').firstChild.textContent = isReg ? 'Вже є акаунт? ' : 'Немає акаунту? ';
+});
+
+document.getElementById('login-btn').addEventListener('click', async ()=>{
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  if(!email||!pass){ errEl.textContent='Заповніть всі поля'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='...';
+  if(isReg){
+    const {data,error} = await sb.auth.signUp({email, password:pass});
+    if(error){ errEl.textContent=error.message; errEl.style.display='block'; btn.disabled=false; btn.textContent='ЗАРЕЄСТРУВАТИСЬ'; return; }
+    if(data.user) await sb.from('profiles').insert({id:data.user.id, role:'viewer'});
+    toast('Реєстрація успішна! Тепер увійдіть.');
+    isReg=false; btn.disabled=false; btn.textContent='УВІЙТИ';
+    document.getElementById('toggle-reg').textContent='Зареєструватись';
+    document.querySelector('.login-toggle').firstChild.textContent='Немає акаунту? ';
+    return;
   }
+  const {data,error} = await sb.auth.signInWithPassword({email, password:pass});
+  if(error){ errEl.textContent=error.message; errEl.style.display='block'; btn.disabled=false; btn.textContent='УВІЙТИ'; return; }
+  initApp(data.user);
+});
+document.getElementById('l-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('login-btn').click(); });
+
+document.getElementById('logout-btn').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  currentRole='viewer';
+});
+
+async function initApp(user) {
+  const {data:profile} = await sb.from('profiles').select('role').eq('id',user.id).single();
+  currentRole = profile?.role || 'viewer';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('u-email').textContent = user.email;
+  const rb = document.getElementById('u-role-badge');
+  rb.textContent = currentRole;
+  rb.className = `role-badge role-${currentRole}`;
+  if(currentRole==='editor'||currentRole==='admin'){
+    document.querySelectorAll('.editor-only').forEach(el=>el.classList.remove('hidden'));
+  }
+  if(currentRole==='admin'){
+    document.querySelectorAll('.admin-only').forEach(el=>el.classList.remove('hidden'));
+  }
+  switchTab('tab-dashboard');
+  loadDashboard();
 }
 
-function buildFormHTML(record=null){
-  let html=`<div class="form-grid">`;
-  html+=`<div class="section-divider">// Вхідні параметри</div>`;
-  INPUT_FIELDS.filter(f=>f.group==='input').forEach(f=>{
-    const val = record?.[f.key]??'';
-    html+=`<div class="form-group">
-      <label>${f.label}</label>
-      <input type="${f.type}" id="f_${f.key}" name="${f.key}"
-        ${f.step?`step="${f.step}"`:''}
-        value="${val}" placeholder="${val===''?'null':''}"/>
-    </div>`;
-  });
-  html+=`<div class="section-divider">// True значення (авто)</div>`;
-  INPUT_FIELDS.filter(f=>f.group==='true').forEach(f=>{
-    const val = record?.[f.key]??'';
-    html+=`<div class="form-group">
-      <label>${f.label}</label>
-      <input type="${f.type}" id="f_${f.key}" name="${f.key}"
-        readonly style="color:var(--accent);opacity:.8;cursor:not-allowed;"
-        value="${val}" placeholder="—"/>
-    </div>`;
-  });
-  html+=`</div>`;
-  return html;
+sb.auth.getSession().then(({data:{session}})=>{ if(session) initApp(session.user); });
+
+// ── TABS ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${id}"]`)?.classList.add('active');
 }
 
-// ─── FORECAST PAGE ───
-function renderForecast(){
-  const groups = Object.keys(COEFFS);
-  const content = document.getElementById('main-content');
-  content.innerHTML = `
-    <div style="max-width:700px;">
-      <div class="section-header" style="margin-bottom:1.2rem;">
-        <span class="section-title">КАЛЬКУЛЯТОР ПРОГНОЗУ</span>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent3);padding:1.5rem;margin-bottom:1.5rem;">
-        <div style="font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent3);margin-bottom:1rem;">// Введіть параметри</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>E_c (Індекс бойового тиску)</label>
-            <input type="number" id="fc_ec" step="0.01" placeholder="combat × w_scale × k_prior"/>
-          </div>
-          <div class="form-group">
-            <label>I_real (Епідемічний індекс)</label>
-            <input type="number" id="fc_ireal" step="0.000001" placeholder="flu × c_mob × k_pharm / pop×10⁶"/>
-          </div>
-          <div class="form-group full">
-            <label>D_drone (Індекс ескалації БПЛА)</label>
-            <input type="number" id="fc_ddrone" step="0.000001" placeholder="0.0 — 2.0"/>
-          </div>
-        </div>
-        <button class="btn-add" id="fc-calc-btn" style="margin-top:.5rem;">// РОЗРАХУВАТИ</button>
-      </div>
-
-      <div id="fc-results" class="hidden">
-        <div class="section-header" style="margin-bottom:.8rem;">
-          <span class="section-title">РЕЗУЛЬТАТИ</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;" id="fc-cards"></div>
-        <div style="margin-top:1rem;font-size:.6rem;color:var(--muted);letter-spacing:.06em;">
-          μ = max(0, α + β_c·E_c + β_f·I_real + β_d·D_drone)
-        </div>
-        <div id="fc-save-bar" class="hidden" style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem;">
-          <button class="btn-add" id="fc-save-btn">// ЗБЕРЕГТИ ЗАПИС</button>
-          <span style="font-size:.65rem;color:var(--muted);letter-spacing:.06em;">Відкриє форму з заповненими true_* полями</span>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('fc-calc-btn').addEventListener('click', ()=>{
-    const ec     = parseFloat(document.getElementById('fc_ec').value)    || 0;
-    const ireal  = parseFloat(document.getElementById('fc_ireal').value)  || 0;
-    const ddrone = parseFloat(document.getElementById('fc_ddrone').value) || 0;
-    const results = calcTrue({e_c:ec, i_real:ireal, d_drone:ddrone});
-
-    const labels = {
-      true_tacmed:'Tacmed', true_painkiller:'Painkiller',
-      true_antibiot:'Antibiot', true_lung:'Lung',
-      true_digest:'Digest', true_cardio:'Cardio'
-    };
-
-    let cards = '';
-    for(const [key, val] of Object.entries(results)){
-      cards += `
-        <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);padding:1rem;">
-          <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--label);margin-bottom:.4rem;">${labels[key]}</div>
-          <div style="font-family:var(--display);font-size:1.8rem;color:var(--accent);">${val.toFixed(2)}</div>
-          <div style="font-size:.6rem;color:var(--muted);margin-top:.2rem;">true_${key.replace('true_','')}</div>
-        </div>`;
-    }
-    document.getElementById('fc-cards').innerHTML = cards;
-    document.getElementById('fc-results').classList.remove('hidden');
-
-    // кнопка збереження — тільки для editor і admin
-    const saveBar = document.getElementById('fc-save-bar');
-    if(currentRole === 'editor' || currentRole === 'admin'){
-      saveBar.classList.remove('hidden');
-      document.getElementById('fc-save-btn').onclick = async () => {
-        // відкриваємо модалку з передзаповненими true_* полями
-        openAddModalWithTrue(results, ec, ireal, ddrone);
-      };
-    }
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.tab;
+    switchTab(tab);
+    if(tab==='tab-dashboard') loadDashboard();
+    else if(tab==='tab-records'){ recPage=0; loadRecords(); }
+    else if(tab==='tab-input') initInputForm();
+    else if(tab==='tab-users') loadProfiles();
+    else if(tab==='tab-forecast') loadAnalytics(); // Завантажуємо аналітику
   });
+});
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  const {data,error} = await sb.from('records').select('*').order('date',{ascending:false}).limit(10);
+  const body = document.getElementById('dash-body');
+  if(error){ body.innerHTML=`<tr><td colspan="10" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  if(!data?.length){ body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
+  const lt = (l,t) => `${l??'—'} / <span class="td-true">${t!=null?t.toFixed(4):'—'}</span>`;
+  body.innerHTML = data.map(r=>`<tr>
+    <td class="td-date">${r.date||'—'}</td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
+    <td class="td-num">${r.combat_cases??'—'}</td>
+    <td class="td-num">${r.flu_cases??'—'}</td>
+    <td>${lt(r.tacmed,r.true_tacmed)}</td>
+    <td>${lt(r.painkiller,r.true_painkiller)}</td>
+    <td>${lt(r.antibiot,r.true_antibiot)}</td>
+    <td>${lt(r.lung,r.true_lung)}</td>
+    <td>${lt(r.digest,r.true_digest)}</td>
+    <td>${lt(r.cardio,r.true_cardio)}</td>
+  </tr>`).join('');
 }
 
-function openAddModalWithTrue(trueVals, ec, ireal, ddrone){
-  // передаємо prefill з вже відомими true_* і драйверами
-  const prefill = { e_c: ec, i_real: ireal, d_drone: ddrone, ...trueVals };
-  document.getElementById('modal-title').textContent = 'НОВИЙ ЗАПИС // true_* заповнено';
-  document.getElementById('modal-body').innerHTML = buildFormHTML(prefill);
-  document.getElementById('modal-footer').innerHTML = `
-    <button class="btn-sm" id="modal-cancel-btn">Скасувати</button>
-    <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
-  `;
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  bindCalcTriggers();
-  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-  document.getElementById('modal-save-btn').addEventListener('click', async () => {
-    const vals = getFormValues();
-    const {error} = await sb.from('records').insert([vals]);
-    if(error){ showToast('Помилка: ' + error.message, true); return; }
-    showToast('Запис збережено!');
-    closeModal();
-    navigateTo('records');
-  });
+// ── RECORDS ──
+async function loadRecords() {
+  const from = recPage * PAGE_SIZE;
+  const {data,error,count} = await sb.from('records').select('*',{count:'exact'}).order('date',{ascending:false}).range(from,from+PAGE_SIZE-1);
+  const body = document.getElementById('records-body');
+  if(error){ body.innerHTML=`<tr><td colspan="19" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  const canEdit = currentRole==='admin';
+  const total = Math.ceil((count||0)/PAGE_SIZE);
+  document.getElementById('page-info').textContent = `Записів: ${count} // Сторінка ${recPage+1} з ${total||1}`;
+  document.getElementById('pg-prev').disabled = recPage===0;
+  document.getElementById('pg-next').disabled = recPage>=total-1;
+  const n = v => v!=null ? v : '<span style="color:var(--muted)">—</span>';
+  const t = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '<span style="color:var(--muted)">—</span>';
+  body.innerHTML = data.map(r=>`<tr>
+    <td class="td-date">${r.date||'—'}</td>
+    <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
+    <td class="td-num">${n(r.combat_cases)}</td>
+    <td>${n(r.w_scale)}</td>
+    <td class="td-num">${n(r.flu_cases)}</td>
+    <td>${n(r.tacmed)}</td><td>${n(r.painkiller)}</td><td>${n(r.antibiot)}</td>
+    <td>${n(r.lung)}</td><td>${n(r.digest)}</td><td>${n(r.cardio)}</td><td>${n(r.equip)}</td>
+    ${t(r.true_tacmed)}${t(r.true_painkiller)}${t(r.true_antibiot)}
+    ${t(r.true_lung)}${t(r.true_digest)}${t(r.true_cardio)}
+    ${canEdit?`<td><button class="btn-danger" onclick="deleteRecord('${r.id}')">✕</button></td>`:''}
+  </tr>`).join('');
 }
 
-function getFormValues(){
-  const obj={};
-  INPUT_FIELDS.forEach(f=>{
-    const el=document.getElementById(`f_${f.key}`);
-    if(!el) return;
-    const v=el.value.trim();
-    if(v==='') obj[f.key]=null;
-    else if(f.type==='number') obj[f.key]=parseFloat(v);
-    else obj[f.key]=v;
-  });
-  return obj;
-}
+document.getElementById('pg-prev').addEventListener('click', ()=>{ recPage--; loadRecords(); });
+document.getElementById('pg-next').addEventListener('click', ()=>{ recPage++; loadRecords(); });
 
-function openAddModal(){
-  document.getElementById('modal-title').textContent='НОВИЙ ЗАПИС';
-  document.getElementById('modal-body').innerHTML=buildFormHTML();
-  document.getElementById('modal-footer').innerHTML=`
-    <button class="btn-sm" id="modal-cancel-btn">Скасувати</button>
-    <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
-  `;
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  bindCalcTriggers();
-  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-  document.getElementById('modal-save-btn').addEventListener('click', async ()=>{
-    const vals=getFormValues();
-    const {error}=await sb.from('records').insert([vals]);
-    if(error){ showToast('Помилка: '+error.message, true); return; }
-    showToast('Запис додано!');
-    closeModal();
-    navigateTo(currentPage);
-  });
-}
-
-async function openEditModal(id){
-  const {data,error}=await sb.from('records').select('*').eq('id',id).single();
-  if(error){ showToast('Помилка завантаження', true); return; }
-  document.getElementById('modal-title').textContent='РЕДАГУВАННЯ';
-  document.getElementById('modal-body').innerHTML=buildFormHTML(data);
-  document.getElementById('modal-footer').innerHTML=`
-    <button class="btn-sm" id="modal-cancel-btn">Скасувати</button>
-    <button class="btn-add" id="modal-save-btn">// ЗБЕРЕГТИ</button>
-  `;
-  document.getElementById('modal-overlay').classList.remove('hidden');
-  bindCalcTriggers();
-  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-  document.getElementById('modal-save-btn').addEventListener('click', async ()=>{
-    const vals=getFormValues();
-    const {error:e}=await sb.from('records').update(vals).eq('id',id);
-    if(e){ showToast('Помилка: '+e.message, true); return; }
-    showToast('Запис оновлено!');
-    closeModal();
-    navigateTo(currentPage);
-  });
-}
-
-async function deleteRecord(id){
+async function deleteRecord(id) {
   if(!confirm('Видалити цей запис?')) return;
-  const {error}=await sb.from('records').delete().eq('id',id);
-  if(error){ showToast('Помилка: '+error.message, true); return; }
-  showToast('Видалено!');
-  navigateTo(currentPage);
+  const {error} = await sb.from('records').delete().eq('id',id);
+  if(error){ toast('Помилка: '+error.message, true); return; }
+  toast('Видалено!'); loadRecords();
 }
 
-function closeModal(){
-  document.getElementById('modal-overlay').classList.add('hidden');
+// ── INPUT FORM ──
+function initInputForm() {
+  ['i_combat','i_wscale','i_flu','i_kprior','i_pop','i_cmob','i_kpharm','i_drone']
+    .forEach(id=>document.getElementById(id)?.addEventListener('input', recalcOutputs));
+  recalcOutputs();
 }
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modal-overlay')) closeModal(); });
 
-// ─── USERS ───
-async function renderUsers(){
-  if(currentRole!=='admin'){ document.getElementById('main-content').innerHTML='<div class="empty">Доступ заборонено</div>'; return; }
-  const {data:profiles}=await sb.from('profiles').select('id, role, created_at');
-  const {data:{users}}=await sb.auth.admin?.listUsers?.()??{data:{users:[]}};
-  const content=document.getElementById('main-content');
-
-  // merge by id from profiles (we have all profiles, get emails via alternative)
-  // Since we can't use admin API from anon key, show what we have
-  content.innerHTML=`
-    <div class="section-header">
-      <span class="section-title">КОРИСТУВАЧІ</span>
-      <span class="topbar-meta">${profiles?.length||0} зареєстровано</span>
-    </div>
-    <div class="table-wrap">
-      <table class="users-table">
-        <thead><tr><th>User ID</th><th>Роль</th><th>Дата реєстрації</th><th>Дії</th></tr></thead>
-        <tbody>
-          ${(profiles||[]).map(p=>`
-            <tr>
-              <td style="font-size:.68rem;color:var(--muted)">${p.id}</td>
-              <td>
-                <select class="role-select" data-uid="${p.id}">
-                  <option value="viewer" ${p.role==='viewer'?'selected':''}>viewer</option>
-                  <option value="editor" ${p.role==='editor'?'selected':''}>editor</option>
-                  <option value="admin" ${p.role==='admin'?'selected':''}>admin</option>
-                </select>
-              </td>
-              <td class="date-val">${p.created_at?.slice(0,10)||'—'}</td>
-              <td><button class="btn-sm save-role-btn" data-uid="${p.id}">Зберегти</button></td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div style="margin-top:.8rem;font-size:.65rem;color:var(--muted);letter-spacing:.06em;">
-      * Email юзерів доступний через Supabase Dashboard → Authentication → Users
-    </div>
-  `;
-  document.querySelectorAll('.save-role-btn').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const uid=btn.dataset.uid;
-      const role=document.querySelector(`.role-select[data-uid="${uid}"]`).value;
-      const {error}=await sb.from('profiles').update({role}).eq('id',uid);
-      if(error){ showToast('Помилка: '+error.message,true); return; }
-      showToast('Роль оновлено!');
-    });
+function recalcOutputs() {
+  const g = id => parseFloat(document.getElementById(id)?.value)||0;
+  const r = calcAll({
+    combat_cases: g('i_combat'), w_scale: g('i_wscale'),
+    k_prior:      g('i_kprior')||0.2, flu_cases: g('i_flu'),
+    c_mob:        g('i_cmob')||0.86,  k_pharm: g('i_kpharm')||0.96,
+    est_pop_mln:  g('i_pop')||31.8,   d_drone: g('i_drone')||2.0,
   });
+  document.getElementById('o_ec').value      = r.e_c;
+  document.getElementById('o_ireal').value   = r.i_real;
+  document.getElementById('o_ttacmed').value = r.true_tacmed;
+  document.getElementById('o_tpain').value   = r.true_painkiller;
+  document.getElementById('o_tanti').value   = r.true_antibiot;
+  document.getElementById('o_tlung').value   = r.true_lung;
+  document.getElementById('o_tdigest').value = r.true_digest;
+  document.getElementById('o_tcardio').value = r.true_cardio;
+}
+
+document.getElementById('save-btn').addEventListener('click', async ()=>{
+  const g = id => parseFloat(document.getElementById(id)?.value)||0;
+  const s = id => document.getElementById(id)?.value?.trim()||null;
+  const r = calcAll({
+    combat_cases:g('i_combat'), w_scale:g('i_wscale'), k_prior:g('i_kprior')||0.2,
+    flu_cases:g('i_flu'), c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96,
+    est_pop_mln:g('i_pop')||31.8, d_drone:g('i_drone')||2.0,
+  });
+  const payload = {
+    date:s('i_date'), tactic_focus:s('i_tactic'),
+    combat_cases:g('i_combat'), w_scale:g('i_wscale'), flu_cases:g('i_flu'),
+    tacmed:g('i_tacmed'), painkiller:g('i_pain'), antibiot:g('i_anti'),
+    lung:g('i_lung'), digest:g('i_digest'), cardio:g('i_cardio'), equip:g('i_equip'),
+    k_prior:g('i_kprior')||0.2, est_pop_mln:g('i_pop')||31.8,
+    c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96, d_drone:g('i_drone')||2.0,
+    ...r
+  };
+  const btn = document.getElementById('save-btn');
+  btn.disabled=true; btn.textContent='ЗБЕРЕЖЕННЯ...';
+  const {error} = await sb.from('records').insert([payload]);
+  btn.disabled=false; btn.textContent='ЗБЕРЕГТИ В БАЗУ';
+  if(error){ toast('Помилка: '+error.message, true); return; }
+  toast('Запис збережено!');
+  switchTab('tab-dashboard'); loadDashboard();
+});
+
+// ── АНАЛІТИКА ТА ЕКСПОРТ (FORECAST TAB) ──
+async function loadAnalytics() {
+  // Завантажуємо всі дані для аналітики, сортуємо від найстаріших до нових для графіка
+  const {data, error} = await sb.from('records').select('*').order('date', {ascending: true});
+  if(error) { toast('Помилка завантаження аналітики: ' + error.message, true); return; }
+  rawAnalyticsData = data || [];
+  applyFilters(); // Одразу малюємо з порожніми фільтрами (весь масив)
+}
+
+function applyFilters() {
+  const dStart = document.getElementById('f-date-start').value;
+  const dEnd = document.getElementById('f-date-end').value;
+  const cMin = parseFloat(document.getElementById('f-combat-min').value);
+  const cMax = parseFloat(document.getElementById('f-combat-max').value);
+  const fMin = parseFloat(document.getElementById('f-flu-min').value);
+  const fMax = parseFloat(document.getElementById('f-flu-max').value);
+
+  currentFilteredData = rawAnalyticsData.filter(r => {
+    if (dStart && r.date < dStart) return false;
+    if (dEnd && r.date > dEnd) return false;
+    if (!isNaN(cMin) && (r.combat_cases || 0) < cMin) return false;
+    if (!isNaN(cMax) && (r.combat_cases || 0) > cMax) return false;
+    if (!isNaN(fMin) && (r.flu_cases || 0) < fMin) return false;
+    if (!isNaN(fMax) && (r.flu_cases || 0) > fMax) return false;
+    return true;
+  });
+
+  renderAnalyticsChart(currentFilteredData);
+  renderAnalyticsTable(currentFilteredData);
+}
+
+function renderAnalyticsChart(data) {
+  const ctx = document.getElementById('analyticsChart').getContext('2d');
+  if(analyticsChartInstance) analyticsChartInstance.destroy();
+
+  // Налаштування теми Chart.js
+  Chart.defaults.color = '#c9d1e0';
+  Chart.defaults.borderColor = '#1e2333';
+  Chart.defaults.font.family = "'Share Tech Mono', monospace";
+
+  const labels = data.map(d => d.date || '—');
+  
+  analyticsChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Tacmed', data: data.map(d=>d.true_tacmed), borderColor: '#00e5a0', tension: 0.3, pointRadius: 3 },
+        { label: 'Painkiller', data: data.map(d=>d.true_painkiller), borderColor: '#ff4560', tension: 0.3, pointRadius: 3 },
+        { label: 'Antibiot', data: data.map(d=>d.true_antibiot), borderColor: '#4d9fff', tension: 0.3, pointRadius: 3 },
+        { label: 'Lung', data: data.map(d=>d.true_lung), borderColor: '#ffb830', tension: 0.3, pointRadius: 3 },
+        { label: 'Digest', data: data.map(d=>d.true_digest), borderColor: '#b566ff', tension: 0.3, pointRadius: 3 },
+        { label: 'Cardio', data: data.map(d=>d.true_cardio), borderColor: '#00d2ff', tension: 0.3, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+function renderAnalyticsTable(data) {
+  const tbody = document.getElementById('analytics-body');
+  if(!data.length) { tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
+  
+  const n = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '—';
+  // Виводимо дані в зворотному порядку (щоб найновіші були зверху таблиці, хоча на графіку вони справа)
+  const reversedData = [...data].reverse();
+  
+  tbody.innerHTML = reversedData.map(r=>`<tr>
+    <td class="td-date">${r.date||'—'}</td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
+    <td class="td-num">${r.combat_cases||0}</td>
+    <td class="td-num">${r.flu_cases||0}</td>
+    <td>${n(r.true_tacmed)}</td>
+    <td>${n(r.true_painkiller)}</td>
+    <td>${n(r.true_antibiot)}</td>
+    <td>${n(r.true_lung)}</td>
+    <td>${n(r.true_digest)}</td>
+    <td>${n(r.true_cardio)}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('btn-apply-filters').addEventListener('click', applyFilters);
+
+document.getElementById('btn-export-excel').addEventListener('click', () => {
+  if (!currentFilteredData || currentFilteredData.length === 0) {
+    toast('Немає даних для експорту', true);
+    return;
+  }
+  
+  // Створюємо "пласку" структуру для Excel
+  const exportData = currentFilteredData.map(r => ({
+    'Дата': r.date || '',
+    'Тактика': r.tactic_focus || '',
+    'W Scale': r.w_scale || 0,
+    'Combat Cases': r.combat_cases || 0,
+    'Flu Cases': r.flu_cases || 0,
+    'Tacmed (Orig)': r.tacmed || 0,
+    'Tacmed (True)': r.true_tacmed || 0,
+    'Painkiller (Orig)': r.painkiller || 0,
+    'Painkiller (True)': r.true_painkiller || 0,
+    'Antibiot (Orig)': r.antibiot || 0,
+    'Antibiot (True)': r.true_antibiot || 0,
+    'Lung (Orig)': r.lung || 0,
+    'Lung (True)': r.true_lung || 0,
+    'Digest (Orig)': r.digest || 0,
+    'Digest (True)': r.true_digest || 0,
+    'Cardio (Orig)': r.cardio || 0,
+    'Cardio (True)': r.true_cardio || 0,
+    'Equip (Orig)': r.equip || 0
+  }));
+
+  // Генеруємо Excel файл через SheetJS
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "DigitalTwin_Analytics");
+  XLSX.writeFile(workbook, "DigitalTwin_Export.xlsx");
+  
+  toast('Експорт завершено!');
+});
+
+
+// ── USERS ──
+async function loadProfiles() {
+  const container = document.getElementById('profiles-container');
+  const {data,error} = await sb.from('profiles').select('*');
+  if(error){ container.innerHTML=`<p style="color:var(--accent2)">Помилка: ${error.message}</p>`; return; }
+  if(!data?.length){ container.innerHTML='<p style="color:var(--muted)">Користувачів не знайдено</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>User ID</th><th>Роль</th><th>Реєстрація</th><th style="text-align:right">Дія</th></tr></thead>
+    <tbody>
+      ${data.map(p=>`<tr>
+        <td style="font-size:.7rem;color:var(--muted)">${p.id}</td>
+        <td>
+          <select class="role-select" id="role-${p.id}">
+            <option value="viewer"  ${p.role==='viewer'?'selected':''}>viewer</option>
+            <option value="editor"  ${p.role==='editor'?'selected':''}>editor</option>
+            <option value="admin"   ${p.role==='admin'?'selected':''}>admin</option>
+          </select>
+        </td>
+        <td class="td-date">${p.created_at?.slice(0,10)||'—'}</td>
+        <td style="text-align:right">
+          <button class="btn-save" onclick="updateRole('${p.id}')">ЗБЕРЕГТИ</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <p style="font-size:.65rem;color:var(--muted);margin-top:10px">* Email: Supabase Dashboard → Authentication → Users</p>`;
+}
+
+async function updateRole(uid) {
+  const sel = document.getElementById(`role-${uid}`);
+  if(!sel) return;
+  const {error} = await sb.from('profiles').update({role:sel.value}).eq('id',uid);
+  if(error){ toast('Помилка: '+error.message, true); return; }
+  toast('Роль оновлено!');
 }
 </script>
 </body>
