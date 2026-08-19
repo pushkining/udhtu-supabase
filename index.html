@@ -170,7 +170,8 @@ tbody tr:hover{background:var(--accent-dim);}
     <button class="nav-btn active" data-tab="tab-dashboard">ДАШБОРД</button>
     <button class="nav-btn" data-tab="tab-records">ВСІ ЗАПИСИ</button>
     <button class="nav-btn editor-only hidden" data-tab="tab-input">ВВЕДЕННЯ</button>
-    <button class="nav-btn" data-tab="tab-forecast">ПРОГНОЗ (АНАЛІТИКА)</button>
+    <button class="nav-btn" data-tab="tab-analytics">АНАЛІТИКА</button>
+    <button class="nav-btn" data-tab="tab-forecast">ПРОГНОЗ</button>
     <button class="nav-btn admin-only hidden" data-tab="tab-users">КОРИСТУВАЧІ</button>
   </div>
 
@@ -181,7 +182,7 @@ tbody tr:hover{background:var(--accent-dim);}
         <table>
           <thead>
             <tr>
-              <th>Дата</th><th>Тактика</th><th>Бойові</th><th>Грип</th>
+              <th>Дата</th><th>Тиждень</th><th>Тактика</th><th>Бойові</th><th>Грип</th>
               <th class="th-true">Tacmed L/T</th>
               <th class="th-true">Painkiller L/T</th>
               <th class="th-true">Antibiot L/T</th>
@@ -190,7 +191,7 @@ tbody tr:hover{background:var(--accent-dim);}
               <th class="th-true">Cardio L/T</th>
             </tr>
           </thead>
-          <tbody id="dash-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+          <tbody id="dash-body"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -203,14 +204,14 @@ tbody tr:hover{background:var(--accent-dim);}
         <table>
           <thead>
             <tr>
-              <th>Дата</th><th>Тактика</th><th>Бойові</th><th>W Scale</th><th>Грип</th>
+              <th>Дата</th><th>Тиждень</th><th>Тактика</th><th>Бойові</th><th>W Scale</th><th>Грип</th>
               <th>Tacmed</th><th>Painkiller</th><th>Antibiot</th><th>Lung</th><th>Digest</th><th>Cardio</th><th>Equip</th>
               <th class="th-true">T.Tacmed</th><th class="th-true">T.Pain</th><th class="th-true">T.Anti</th>
               <th class="th-true">T.Lung</th><th class="th-true">T.Digest</th><th class="th-true">T.Cardio</th>
               <th class="admin-only hidden">Дії</th>
             </tr>
           </thead>
-          <tbody id="records-body"><tr><td colspan="19" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+          <tbody id="records-body"><tr><td colspan="20" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
         </table>
       </div>
       <div class="pagination">
@@ -271,7 +272,7 @@ tbody tr:hover{background:var(--accent-dim);}
     </div>
   </div>
 
-  <div id="tab-forecast" class="tab-content">
+  <div id="tab-analytics" class="tab-content">
     <div class="card">
       <div class="card-title">АНАЛІТИКА ТА ЕКСПОРТ (TRUE_*)</div>
       
@@ -300,7 +301,7 @@ tbody tr:hover{background:var(--accent-dim);}
         <table>
            <thead>
              <tr>
-               <th>Дата</th><th>Тактика</th><th>Combat</th><th>Flu</th>
+               <th>Дата</th><th>Тиждень</th><th>Тактика</th><th>Combat</th><th>Flu</th>
                <th class="th-true">Tacmed (T)</th>
                <th class="th-true">Pain (T)</th>
                <th class="th-true">Anti (T)</th>
@@ -310,9 +311,31 @@ tbody tr:hover{background:var(--accent-dim);}
              </tr>
            </thead>
            <tbody id="analytics-body">
-              <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Завантаження аналітики...</td></tr>
+              <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Завантаження аналітики...</td></tr>
            </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-forecast" class="tab-content">
+    <div class="card">
+      <div class="card-title">ПРОГНОЗ // ML MODEL</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:20px">
+        Модуль прогнозування підключатиметься до окремого ML-сервісу на Julia
+        (виклик через Supabase Edge Function як проксі). Наразі — заглушка інтерфейсу,
+        логіка розрахунку буде додана після розгортання сервісу.
+      </p>
+
+      <div class="form-grid" style="margin-bottom:15px;">
+        <div class="form-group"><label>Горизонт прогнозу (тижнів)</label><input type="number" id="fc-horizon" value="4" min="1" max="52"></div>
+        <div class="form-group" style="grid-column:span 2"><label>Тактика (сценарій)</label><input type="text" id="fc-tactic" placeholder="напр. Positional_War_2026"></div>
+      </div>
+
+      <button class="btn" id="btn-run-forecast">РОЗРАХУВАТИ ПРОГНОЗ</button>
+
+      <div id="forecast-result" style="margin-top:20px;color:var(--muted);font-size:.8rem">
+        Результат прогнозу з'явиться тут після підключення ML-сервісу.
       </div>
     </div>
   </div>
@@ -458,9 +481,22 @@ document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
     else if(tab==='tab-records'){ recPage=0; loadRecords(); }
     else if(tab==='tab-input') initInputForm();
     else if(tab==='tab-users') loadProfiles();
-    else if(tab==='tab-forecast') loadAnalytics(); // Завантажуємо аналітику
+    else if(tab==='tab-analytics') loadAnalytics();
+    else if(tab==='tab-forecast') initForecastTab();
   });
 });
+
+// ── УТИЛІТИ ──
+// Простий тиждень: 01.01–07.01 = тиждень 1, далі по 7 днів (не ISO)
+function getWeekNumber(dateStr) {
+  if(!dateStr) return '—';
+  const datePart = String(dateStr).slice(0,10);
+  const d = new Date(datePart + 'T00:00:00');
+  if(isNaN(d)) return '—';
+  const start = new Date(d.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((d - start) / 86400000) + 1;
+  return Math.ceil(dayOfYear / 7);
+}
 
 // ── DASHBOARD ──
 async function loadDashboard() {
@@ -470,7 +506,8 @@ async function loadDashboard() {
   if(!data?.length){ body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
   const lt = (l,t) => `${l??'—'} / <span class="td-true">${t!=null?t.toFixed(4):'—'}</span>`;
   body.innerHTML = data.map(r=>`<tr>
-    <td class="td-date">${r.date||'—'}</td>
+    <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
+    <td>${getWeekNumber(r.date)}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
     <td class="td-num">${r.combat_cases??'—'}</td>
     <td class="td-num">${r.flu_cases??'—'}</td>
@@ -488,24 +525,25 @@ async function loadRecords() {
   const from = recPage * PAGE_SIZE;
   const {data,error,count} = await sb.from('records').select('*',{count:'exact'}).order('date',{ascending:false}).range(from,from+PAGE_SIZE-1);
   const body = document.getElementById('records-body');
-  if(error){ body.innerHTML=`<tr><td colspan="19" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  if(error){ body.innerHTML=`<tr><td colspan="20" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
   const canEdit = currentRole==='admin';
   const total = Math.ceil((count||0)/PAGE_SIZE);
   document.getElementById('page-info').textContent = `Записів: ${count} // Сторінка ${recPage+1} з ${total||1}`;
   document.getElementById('pg-prev').disabled = recPage===0;
   document.getElementById('pg-next').disabled = recPage>=total-1;
   const n = v => v!=null ? v : '<span style="color:var(--muted)">—</span>';
-  const t = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '<span style="color:var(--muted)">—</span>';
+  const t = v => v!=null ? v.toFixed(4) : '<span style="color:var(--muted)">—</span>';
   body.innerHTML = data.map(r=>`<tr>
-    <td class="td-date">${r.date||'—'}</td>
+    <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
+    <td>${getWeekNumber(r.date)}</td>
     <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
     <td class="td-num">${n(r.combat_cases)}</td>
     <td>${n(r.w_scale)}</td>
     <td class="td-num">${n(r.flu_cases)}</td>
     <td>${n(r.tacmed)}</td><td>${n(r.painkiller)}</td><td>${n(r.antibiot)}</td>
     <td>${n(r.lung)}</td><td>${n(r.digest)}</td><td>${n(r.cardio)}</td><td>${n(r.equip)}</td>
-    ${t(r.true_tacmed)}${t(r.true_painkiller)}${t(r.true_antibiot)}
-    ${t(r.true_lung)}${t(r.true_digest)}${t(r.true_cardio)}
+    <td>${t(r.true_tacmed)}</td><td>${t(r.true_painkiller)}</td><td>${t(r.true_antibiot)}</td>
+    <td>${t(r.true_lung)}</td><td>${t(r.true_digest)}</td><td>${t(r.true_cardio)}</td>
     ${canEdit?`<td><button class="btn-danger" onclick="deleteRecord('${r.id}')">✕</button></td>`:''}
   </tr>`).join('');
 }
@@ -637,14 +675,15 @@ function renderAnalyticsChart(data) {
 
 function renderAnalyticsTable(data) {
   const tbody = document.getElementById('analytics-body');
-  if(!data.length) { tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
+  if(!data.length) { tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
   
   const n = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '—';
   // Виводимо дані в зворотному порядку (щоб найновіші були зверху таблиці, хоча на графіку вони справа)
   const reversedData = [...data].reverse();
   
   tbody.innerHTML = reversedData.map(r=>`<tr>
-    <td class="td-date">${r.date||'—'}</td>
+    <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
+    <td>${getWeekNumber(r.date)}</td>
     <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
     <td class="td-num">${r.combat_cases||0}</td>
     <td class="td-num">${r.flu_cases||0}</td>
@@ -696,6 +735,17 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
   toast('Експорт завершено!');
 });
 
+
+// ── ПРОГНОЗ (ML, Julia backend — заглушка) ──
+function initForecastTab() {
+  // Тут згодом буде виклик Supabase Edge Function, яка проксіює запит
+  // до окремого ML-сервісу на Julia.
+}
+
+document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
+  document.getElementById('forecast-result').innerHTML =
+    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
+});
 
 // ── USERS ──
 async function loadProfiles() {
