@@ -365,36 +365,67 @@ let rawAnalyticsData = [];
 let currentFilteredData = [];
 let analyticsChartInstance = null;
 
-// ── COEFFICIENTS (Vol_2025) ──
-const COEFFS = {
-  tacmed:     { intercept:0,         beta_c:0.241735, beta_f:0,          beta_d:6.880236, vol:0.097516 },
-  painkiller: { intercept:64.228245, beta_c:0.055056, beta_f:0,          beta_d:2.579936, vol:0.093323 },
-  antibiot:   { intercept:-3.907140, beta_c:0.030527, beta_f:580.381877, beta_d:0.890014, vol:0.123410 },
-  lung:       { intercept:24.655498, beta_c:0,        beta_f:223.810119, beta_d:0,        vol:0.123134 },
-  digest:     { intercept:47.868949, beta_c:0.011502, beta_f:87.258060,  beta_d:0,        vol:0.145755 },
-  cardio:     { intercept:39.050825, beta_c:0.004923, beta_f:25.392452,  beta_d:0,        vol:0.099910 },
+// ──────────────── БЛОК 1 ────────────────
+// Замінює: COEFFS, randomNormal (Box-Muller), старий calcAll.
+// randomNormal і COEFFS більше ніде не використовуються — видаляються повністю.
+
+const NB_PARAMS = {
+  // медіанні коефіцієнти у ВИХІДНИХ одиницях (перехід з z-шкали вже зроблено)
+  groups: {
+    tacmed:     { c0: 4.908,  cE: 0.0001148, cI: 0,      cd: 0.01184 },
+    painkiller: { c0: 4.4329, cE: 0.00008288, cI: 0,     cd: 0 },
+    lung:       { c0: 4.0525, cE: 0,          cI: 54.33,  cd: 0 },
+    antibiot:   { c0: 3.831,  cE: 0.0004656,  cI: 171.8,  cd: 0 },
+    cardio:     { c0: 3.3814, cE: 0.00007339, cI: 140.4,  cd: 0 },
+    equip:      { c0: 6.1719, cE: 0.0001291,  cI: 14.46,  cd: 0 },
+    digest:     { c0: 4.4297, cE: 0.0001158,  cI: 4.025,  cd: 0 }
+  },
+  // волонтерська частка за періодами (апостеріорні медіани V)
+  V: [0.362, 0.374, 0.028]   // індекс 0: 2022–2024, 1: 2025, 2: 2026+
 };
 
-// ── BOX-MULLER ──
-function randomNormal(mean, stdDev) {
-  let u1 = Math.random(), u2 = Math.random();
-  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-  return z0 * stdDev + mean;
+// d_drone = роки від 01.01.2023 (лінійний тренд, назву збережено для сумісності)
+function dDroneFrom(dateStr) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((dateStr || '').trim());
+  if (!m) return null;
+  const t  = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  const t0 = Date.UTC(2023, 0, 1);
+  return Math.max(0, (t - t0) / (365 * 86400000));
 }
 
-// ── FORMULA CHAIN ──
+// V за періодом: 2022–2024 → 0.362, 2025 → 0.374, 2026+ → 0.028
+function vFrom(dateStr) {
+  const y = +((dateStr || '').trim().slice(0, 4));
+  if (!y) return null;
+  return NB_PARAMS.V[y <= 2024 ? 0 : (y === 2025 ? 1 : 2)];
+}
+
+// ── FORMULA CHAIN (детермінована: без vol-множника в потребі, без шуму) ──
+// true_*  = ПОТРЕБА (медіана NB, до вирахування волонтерської частки)
+// obs_hat = модельне СПОЖИВАННЯ = потреба × (1 − V_period)
 function calcAll(p) {
-  const e_c    = (p.combat_cases||0) * (p.w_scale||0) * (p.k_prior||0.2);
-  const i_real = ((p.flu_cases||0) * (p.c_mob||0.86) * (p.k_pharm||0.96)) / ((p.est_pop_mln||31.8) * 1e6);
-  const res    = { e_c: parseFloat(e_c.toFixed(4)), i_real: parseFloat(i_real.toFixed(6)) };
-  for (const [grp, c] of Object.entries(COEFFS)) {
-    const mu    = Math.max(0, c.intercept + c.beta_c*e_c + c.beta_f*i_real + c.beta_d*(p.d_drone||2.0));
-    const mean  = mu * (1 - c.vol);
-    const sigma = mean * 0.05;
-    res[`true_${grp}`] = parseFloat(Math.max(0, randomNormal(mean, sigma)).toFixed(4));
+  const e_c    = (p.combat_cases || 0) * (p.w_scale || 0) * (p.k_prior || 0.2);
+  const i_real = ((p.flu_cases || 0) * (p.c_mob || 0.86) * (p.k_pharm || 0.96))
+               / ((p.est_pop_mln || 31.8) * 1e6);
+  // дату беремо з форми; якщо порожня/некоректна — вважаємо сьогодні (тренд триває)
+  const dateStr = (p.date && p.date.trim && p.date.trim().length === 10)
+    ? p.date : new Date().toISOString().slice(0, 10);
+  const d_drone = dDroneFrom(dateStr) ?? 0;
+  const V       = vFrom(dateStr) ?? NB_PARAMS.V[0];
+
+  const res = {
+    e_c:     parseFloat(e_c.toFixed(4)),
+    i_real:  parseFloat(i_real.toFixed(6)),
+    d_drone: parseFloat(d_drone.toFixed(4))
+  };
+  for (const [grp, c] of Object.entries(NB_PARAMS.groups)) {
+    const need    = Math.exp(c.c0 + c.cE * e_c + c.cI * i_real + c.cd * d_drone);
+    res[`true_${grp}`]    = parseFloat(need.toFixed(4));
+    res[`obs_hat_${grp}`] = parseFloat((need * (1 - V)).toFixed(4));
   }
   return res;
 }
+
 
 // ── TOAST ──
 function toast(msg, err=false) {
@@ -558,21 +589,35 @@ async function deleteRecord(id) {
   toast('Видалено!'); loadRecords();
 }
 
-// ── INPUT FORM ──
+// ──────────────── БЛОК 2 ────────────────
+// Замінює: function initInputForm() {...}
+// Що нового: перерахунок при зміні ДАТИ; поле d_drone стає readonly.
+
 function initInputForm() {
-  ['i_combat','i_wscale','i_flu','i_kprior','i_pop','i_cmob','i_kpharm','i_drone']
-    .forEach(id=>document.getElementById(id)?.addEventListener('input', recalcOutputs));
+  ['i_date', 'i_combat', 'i_wscale', 'i_flu', 'i_kprior', 'i_pop', 'i_cmob', 'i_kpharm']
+    .forEach(id => document.getElementById(id)?.addEventListener('input', recalcOutputs));
+  const dEl = document.getElementById('i_drone');
+  if (dEl) { dEl.readOnly = true; dEl.title = 'Тренд d_drone обчислюється з дати автоматично'; }
   recalcOutputs();
 }
 
+
+// ──────────────── БЛОК 3 ────────────────
+// Замінює: function recalcOutputs() {...}
+// Що нового: calcAll одержує дату; d_drone показується обчислений;
+// true_equip виводиться, якщо у формі є поле o_tequip (додайте за бажанням).
+
 function recalcOutputs() {
-  const g = id => parseFloat(document.getElementById(id)?.value)||0;
+  const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const s = id => (document.getElementById(id)?.value || '').trim();
   const r = calcAll({
     combat_cases: g('i_combat'), w_scale: g('i_wscale'),
-    k_prior:      g('i_kprior')||0.2, flu_cases: g('i_flu'),
-    c_mob:        g('i_cmob')||0.86,  k_pharm: g('i_kpharm')||0.96,
-    est_pop_mln:  g('i_pop')||31.8,   d_drone: g('i_drone')||2.0,
+    k_prior:      g('i_kprior') || 0.2, flu_cases: g('i_flu'),
+    c_mob:        g('i_cmob') || 0.86,  k_pharm: g('i_kpharm') || 0.96,
+    est_pop_mln:  g('i_pop') || 31.8,
+    date:         s('i_date')
   });
+  document.getElementById('i_drone').value   = r.d_drone;   // readonly-тренд
   document.getElementById('o_ec').value      = r.e_c;
   document.getElementById('o_ireal').value   = r.i_real;
   document.getElementById('o_ttacmed').value = r.true_tacmed;
@@ -581,7 +626,10 @@ function recalcOutputs() {
   document.getElementById('o_tlung').value   = r.true_lung;
   document.getElementById('o_tdigest').value = r.true_digest;
   document.getElementById('o_tcardio').value = r.true_cardio;
+  const eq = document.getElementById('o_tequip');
+  if (eq) eq.value = r.true_equip;
 }
+
 
 document.getElementById('save-btn').addEventListener('click', async ()=>{
   const g = id => parseFloat(document.getElementById(id)?.value)||0;
@@ -589,7 +637,8 @@ document.getElementById('save-btn').addEventListener('click', async ()=>{
   const r = calcAll({
     combat_cases:g('i_combat'), w_scale:g('i_wscale'), k_prior:g('i_kprior')||0.2,
     flu_cases:g('i_flu'), c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96,
-    est_pop_mln:g('i_pop')||31.8, d_drone:g('i_drone')||2.0,
+    est_pop_mln:g('i_pop')||31.8,
+    date: s('i_date')                      // якщо порожньо — calcAll візьме сьогодні
   });
   const payload = {
     date:s('i_date'), tactic_focus:s('i_tactic'),
@@ -597,8 +646,8 @@ document.getElementById('save-btn').addEventListener('click', async ()=>{
     tacmed:g('i_tacmed'), painkiller:g('i_pain'), antibiot:g('i_anti'),
     lung:g('i_lung'), digest:g('i_digest'), cardio:g('i_cardio'), equip:g('i_equip'),
     k_prior:g('i_kprior')||0.2, est_pop_mln:g('i_pop')||31.8,
-    c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96, d_drone:g('i_drone')||2.0,
-    ...r
+    c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96,
+    ...r                                   // e_c, i_real, d_drone, true_*, obs_hat_*
   };
   const btn = document.getElementById('save-btn');
   btn.disabled=true; btn.textContent='ЗБЕРЕЖЕННЯ...';
