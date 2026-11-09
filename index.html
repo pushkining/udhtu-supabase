@@ -322,15 +322,27 @@ tbody tr:hover{background:var(--accent-dim);}
     <div class="card">
       <div class="card-title">ПРОГНОЗ // ML MODEL</div>
       <p style="color:var(--muted);font-size:.8rem;margin-bottom:20px">
-        Модуль прогнозування підключатиметься до окремого ML-сервісу на Julia
-        (виклик через Supabase Edge Function як проксі). Наразі — заглушка інтерфейсу,
-        логіка розрахунку буде додана після розгортання сервісу.
-      </p>
-
-      <div class="form-grid" style="margin-bottom:15px;">
-        <div class="form-group"><label>Горизонт прогнозу (тижнів)</label><input type="number" id="fc-horizon" value="4" min="1" max="52"></div>
-        <div class="form-group" style="grid-column:span 2"><label>Тактика (сценарій)</label><input type="text" id="fc-tactic" placeholder="напр. Positional_War_2026"></div>
-      </div>
+     Прогноз NB-моделі v2 (навчена на 231 тижнях, 2022-05-02 .. 2026-09-28).
+     Задайте сценарій на горизонт — функція «forecast» рахує потребу і
+     споживання по 7 групах з інтервалами.
+   </p>
+   <div class="form-grid" style="margin-bottom:15px;">
+     <div class="form-group"><label>Стартова дата (пн)</label><input type="date" id="fc-date"></div>
+     <div class="form-group"><label>Горизонт (тижнів)</label><input type="number" id="fc-horizon" value="4" min="1" max="52"></div>
+     <div class="form-group"><label>Бойові / тиждень</label><input type="number" id="fc-combat" value="1300" min="0"></div>
+     <div class="form-group"><label>W Scale</label><input type="number" id="fc-wscale" value="1.2" step="0.1" min="0"></div>
+     <div class="form-group"><label>K Prior</label><input type="number" id="fc-kprior" value="0.3" step="0.05" min="0"></div>
+     <div class="form-group"><label>Грип / тиждень</label><input type="number" id="fc-flu" value="95000" min="0"></div>
+     <div class="form-group"><label>C Mob</label><input type="number" id="fc-cmob" value="0.86" step="0.01" min="0" max="1"></div>
+     <div class="form-group"><label>K Pharm</label><input type="number" id="fc-kpharm" value="0.95" step="0.01" min="0" max="1"></div>
+     <div class="form-group"><label>Населення (млн)</label><input type="number" id="fc-pop" value="31.8" step="0.1" min="1"></div>
+     <div class="form-group" style="grid-column:span 2"><label>Тактика (мітка сценарію)</label><input type="text" id="fc-tactic" placeholder="напр. Positional_War_2026"></div>
+   </div>
+   <div style="margin-bottom:15px;display:flex;gap:10px;align-items:center;">
+     <label style="color:var(--muted);font-size:.75rem">РЕЖИМ:</label>
+     <button class="btn" id="fc-mode-btn" style="padding:6px 14px;font-size:.75rem">ПОТРЕБА</button>
+     <span id="fc-mode-hint" style="color:var(--muted);font-size:.7rem"></span>
+   </div>
 
       <button class="btn" id="btn-run-forecast">РОЗРАХУВАТИ ПРОГНОЗ</button>
 
@@ -785,11 +797,91 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
 });
 
 
-// ── ПРОГНОЗ (ML, Julia backend — заглушка) ──
+// ──────────────── БЛОК 6 (JS вкладки «ПРОГноз») ────────────────
+// Замінює: initForecastTab() + обробник btn-run-forecast (обидва «заглушки»
+// в кінці секції «── ПРОГНОЗ (ML, Julia backend — заглушка) ──»).
+
+let fcLast = null;          // остання відповідь Edge Function
+let fcMode = 'need';         // 'need' (потреба) | 'obs' (споживання)
+
 function initForecastTab() {
-  // Тут згодом буде виклик Supabase Edge Function, яка проксіює запит
-  // до окремого ML-сервісу на Julia.
+  // предзаповнення стартової дати: останній тиждень бази + 7 днів
+  const dEl = document.getElementById('fc-date');
+  if (dEl && !dEl.value) {
+    sb.from('records').select('date').order('date', { ascending: false }).limit(1)
+      .then(({ data }) => { if (data?.[0]?.date) dEl.value = data[0].date.slice(0, 10); });
+  }
 }
+
+document.getElementById('btn-run-forecast')?.addEventListener('click', async () => {
+  const g = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const el = document.getElementById('forecast-result');
+  el.innerHTML = '<span style="color:var(--muted)">Розрахунок…</span>';
+  try {
+    const { data, error } = await sb.functions.invoke('forecast', { body: {
+      start_date: document.getElementById('fc-date')?.value || undefined,
+      weeks: Math.max(1, Math.min(52, parseInt(document.getElementById('fc-horizon')?.value) || 4)),
+      combat_cases: g('fc-combat'), w_scale: g('fc-wscale'), k_prior: g('fc-kprior') || 0.3,
+      flu_cases: g('fc-flu'), c_mob: g('fc-cmob') || 0.86, k_pharm: g('fc-kpharm') || 0.95,
+      est_pop_mln: g('fc-pop') || 31.8,
+      scenario: document.getElementById('fc-tactic')?.value?.trim() || null
+    }});
+    if (error) throw new Error(error.message || 'Edge Function error');
+    fcLast = data;
+    renderForecast();
+  } catch (e) {
+    el.innerHTML = '<span style="color:var(--accent2)">Помилка прогнозу: ' + e.message +
+      '.<br>Перевірте, що Edge Function «forecast» розгорнута (канвас edge-forecast-fn).</span>';
+  }
+});
+
+// перемикач «потреба/споживання» — перемальовка без нового запиту
+document.getElementById('fc-mode-btn')?.addEventListener('click', () => {
+  fcMode = fcMode === 'need' ? 'obs' : 'need';
+  renderForecast();
+});
+
+function renderForecast() {
+  const el = document.getElementById('forecast-result');
+  const modeBtn = document.getElementById('fc-mode-btn');
+  const hint = document.getElementById('fc-mode-hint');
+  if (!fcLast) return;
+  modeBtn.textContent = fcMode === 'need' ? 'ПОТРЕБА' : 'СПОЖИВАННЯ';
+  hint.textContent = fcMode === 'need'
+    ? 'потреба — до вирахування волонтерської частки V'
+    : 'споживання = потреба × (1 − V_period); у дужках — інтервал p05–p95';
+
+  const GN = [['tacmed','Tacmed'],['painkiller','Painkillers'],['lung','Lung'],
+              ['antibiot','Antibiot'],['cardio','Cardio'],['equip','Equip'],['digest','Digest']];
+  const rows = fcLast.weeks.map(w => {
+    const cells = GN.map(([g]) => {
+      const gr = w.groups[g];
+      const v = fcMode === 'need' ? gr.need : gr.obs_hat;
+      const iv = fcMode === 'obs' ? ` <span style="color:var(--muted);font-size:.65rem">(${gr.p05}–${gr.p95})</span>` : '';
+      return `<td class="td-true">${v != null ? v.toFixed(1) : '—'}${iv}</td>`;
+    }).join('');
+    return `<tr><td class="td-date">${w.date}</td><td class="td-num">${w.d_drone}</td>` +
+           `<td class="td-num">${w.V.toFixed(3)}</td>${cells}</tr>`;
+  }).join('');
+  el.innerHTML =
+    '<div style="font-size:.7rem;color:var(--muted);margin-bottom:8px">' +
+      (fcLast.scenario?.tactic ? 'Сценарій: ' + fcLast.scenario.tactic + ' | ' : '') +
+      'e_c=' + fcLast.e_c + ', i_real=' + fcLast.i_real +
+      ' | модель NB v2, ' + fcLast.trained_weeks + ' тижнів' +
+    '</div>' +
+    '<div class="table-container"><table><thead><tr><th>Дата</th><th>d_drone</th><th>V</th>' +
+      GN.map(([, n]) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
+  document.getElementById('forecast-result').innerHTML =
+    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
+});
+
+document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
+  document.getElementById('forecast-result').innerHTML =
+    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
+});
 
 document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
   document.getElementById('forecast-result').innerHTML =
