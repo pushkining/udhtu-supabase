@@ -54,7 +54,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:20px
 .btn-logout:hover{border-color:var(--accent2);color:var(--accent2);}
 
 /* ── TABS ── */
-.main-nav{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid var(--border);padding-bottom:10px;}
+.main-nav{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid var(--border);padding-bottom:10px;flex-wrap:wrap;}
 .nav-btn{background:var(--surface);color:var(--text);border:1px solid var(--border);
   padding:10px 22px;cursor:pointer;font-family:var(--display);font-size:1.3rem;transition:.2s;}
 .nav-btn.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
@@ -65,7 +65,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:20px
 /* ── CARDS ── */
 .card{background:var(--surface);border:1px solid var(--border);padding:25px;margin-bottom:20px;position:relative;}
 .card::before{content:"";position:absolute;top:0;left:0;width:2px;height:100%;background:var(--accent);}
-.card-title{font-family:var(--display);font-size:1.5rem;margin-bottom:15px;letter-spacing:.05em;}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px;}
+.card-title{font-family:var(--display);font-size:1.5rem;letter-spacing:.05em;}
 
 /* ── FORM ── */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;}
@@ -74,7 +75,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);padding:20px
 .form-group input{background:var(--surface2);color:var(--text);border:1px solid var(--border);
   padding:10px;font-family:var(--mono);outline:none;transition:border-color .15s;}
 .form-group input:focus{border-color:var(--accent);}
-.form-group input[readonly]{color:var(--accent);cursor:not-allowed;background:rgba(0,229,160,0.04);}
+.form-group input[readonly]{color:var(--accent);cursor:default;background:rgba(0,229,160,0.04);border-color:rgba(0,229,160,0.25);}
 .section-label{grid-column:1/-1;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
   color:var(--muted);padding-bottom:5px;border-bottom:1px solid var(--border);margin-top:5px;}
 .section-label.green{color:var(--accent);}
@@ -89,25 +90,30 @@ summary{cursor:pointer;color:var(--accent3);font-size:.8rem;text-transform:upper
 .btn:hover{background:#fff;box-shadow:0 0 20px var(--accent-dim);}
 .btn:disabled{opacity:.4;cursor:not-allowed;background:var(--accent);}
 .btn-sm{background:transparent;border:1px solid var(--border);color:var(--muted);
-  padding:5px 14px;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;cursor:pointer;transition:.15s;}
+  padding:6px 14px;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;cursor:pointer;transition:.15s;}
 .btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-warn{background:transparent;border:1px solid var(--warning);color:var(--warning);
+  padding:6px 14px;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;cursor:pointer;transition:.15s;}
+.btn-warn:hover{background:rgba(255,184,48,.12);}
 .btn-save{background:var(--accent);color:#000;border:none;padding:6px 16px;
   font-family:var(--display);font-size:1rem;cursor:pointer;transition:.2s;}
 .btn-save:hover{background:#fff;}
 .btn-danger{background:transparent;border:1px solid var(--accent2);color:var(--accent2);
-  padding:5px 12px;font-family:var(--mono);font-size:.7rem;cursor:pointer;transition:.15s;}
+  padding:4px 9px;font-family:var(--mono);font-size:.7rem;cursor:pointer;transition:.15s;}
 .btn-danger:hover{background:rgba(255,69,96,.1);}
+.btn-edit{background:transparent;border:1px solid var(--accent3);color:var(--accent3);
+  padding:4px 9px;font-family:var(--mono);font-size:.7rem;cursor:pointer;transition:.15s;margin-right:4px;}
+.btn-edit:hover{background:rgba(77,159,255,.1);}
 
 /* ── TABLE ── */
 .table-container{overflow-x:auto;margin-top:10px;}
 table{width:100%;border-collapse:collapse;font-size:.82rem;}
-th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
 th{color:var(--label);font-size:.65rem;text-transform:uppercase;border-top:1px solid var(--border);background:var(--surface2);}
 th.th-true{color:var(--accent);}
 td.td-date{color:var(--accent3);}
 td.td-num{color:var(--warning);}
 td.td-true{color:var(--accent);font-weight:bold;}
-td.td-muted{color:var(--muted);font-style:italic;}
 tbody tr:hover{background:var(--accent-dim);}
 
 /* ── PAGINATION ── */
@@ -115,18 +121,25 @@ tbody tr:hover{background:var(--accent-dim);}
   padding:10px 0;margin-top:10px;font-size:.72rem;color:var(--muted);}
 .page-btns{display:flex;gap:8px;}
 
+/* ── MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-backdrop.open{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--accent);padding:25px;
+  width:100%;max-width:720px;max-height:90vh;overflow-y:auto;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+
 /* ── TOAST ── */
-.toast{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--surface);
+.toast{position:fixed;bottom:20px;right:20px;z-index:1100;background:var(--surface);
   border-left:3px solid var(--accent);border:1px solid var(--border);border-left-width:3px;
-  padding:12px 18px;font-size:.75rem;transform:translateX(120%);transition:transform .3s;max-width:280px;}
+  padding:12px 18px;font-size:.75rem;transform:translateX(120%);transition:transform .3s;max-width:320px;}
 .toast.show{transform:translateX(0);}
 .toast.error{border-left-color:var(--accent2);}
 
 .hidden{display:none!important;}
 .role-select{background:var(--bg);color:var(--text);border:1px solid var(--border);
   padding:5px 8px;font-family:var(--mono);font-size:.75rem;outline:none;}
-  
-/* Додаток для кнопок аналітики */
+
 .filter-btn-group { display: flex; gap: 15px; margin-top: 15px; margin-bottom: 25px; }
 .btn-export { background: var(--accent3); }
 .btn-export:hover { box-shadow: 0 0 20px rgba(77, 159, 255, 0.4); }
@@ -175,9 +188,10 @@ tbody tr:hover{background:var(--accent-dim);}
     <button class="nav-btn admin-only hidden" data-tab="tab-users">КОРИСТУВАЧІ</button>
   </div>
 
+  <!-- DASHBOARD -->
   <div id="tab-dashboard" class="tab-content active">
     <div class="card">
-      <div class="card-title">ОСТАННІ 10 ЗАПИСІВ // Ledger / <span style="color:var(--accent)">True</span></div>
+      <div class="card-title" style="margin-bottom:15px">ОСТАННІ 10 ЗАПИСІВ // Ledger / <span style="color:var(--accent)">True</span></div>
       <div class="table-container">
         <table>
           <thead>
@@ -197,9 +211,15 @@ tbody tr:hover{background:var(--accent-dim);}
     </div>
   </div>
 
+  <!-- RECORDS -->
   <div id="tab-records" class="tab-content">
     <div class="card">
-      <div class="card-title">ВСІ ЗАПИСИ</div>
+      <div class="card-header">
+        <div class="card-title">ВСІ ЗАПИСИ</div>
+        <button class="btn-warn admin-only hidden" id="btn-recalc-all" title="Перерахувати e_c, i_real, d_drone та true_* у всіх записах БД за формулою табл. 3.1">
+          ↻ ПЕРЕРАХУВАТИ БАЗУ (TRUE_*)
+        </button>
+      </div>
       <div class="table-container">
         <table>
           <thead>
@@ -224,9 +244,10 @@ tbody tr:hover{background:var(--accent-dim);}
     </div>
   </div>
 
+  <!-- INPUT -->
   <div id="tab-input" class="tab-content">
     <div class="card">
-      <div class="card-title">ВВЕДЕННЯ ПАРАМЕТРІВ</div>
+      <div class="card-title" style="margin-bottom:15px">ВВЕДЕННЯ ПАРАМЕТРІВ</div>
       <div class="form-grid">
         <div class="section-label blue full">// Основні дані</div>
         <div class="form-group"><label>Дата</label><input type="date" id="i_date"/></div>
@@ -252,12 +273,12 @@ tbody tr:hover{background:var(--accent-dim);}
           <div class="form-group"><label>est_pop_mln <span style="color:var(--muted)">(def 31.8)</span></label><input type="number" id="i_pop" step="0.1" value="31.8"/></div>
           <div class="form-group"><label>c_mob <span style="color:var(--muted)">(def 0.86)</span></label><input type="number" id="i_cmob" step="0.001" value="0.86"/></div>
           <div class="form-group"><label>k_pharm <span style="color:var(--muted)">(def 0.96)</span></label><input type="number" id="i_kpharm" step="0.001" value="0.96"/></div>
-          <div class="form-group"><label>d_drone <span style="color:var(--muted)">(def 2.0)</span></label><input type="number" id="i_drone" step="0.001" value="2.0"/></div>
+          <div class="form-group"><label>d_drone <span style="color:var(--muted)">(від дати)</span></label><input type="number" id="i_drone" step="0.001" value="0" readonly/></div>
         </div>
       </details>
 
       <div class="form-grid" style="margin-top:20px">
-        <div class="section-label green full">// Авторозрахунок (readonly)</div>
+        <div class="section-label green full">// Попередній розрахунок потреби (автоматично)</div>
         <div class="form-group"><label>E_c</label><input type="number" id="o_ec" readonly/></div>
         <div class="form-group"><label>I_real</label><input type="number" id="o_ireal" readonly/></div>
         <div class="form-group"><label>True Tacmed</label><input type="number" id="o_ttacmed" readonly/></div>
@@ -266,15 +287,17 @@ tbody tr:hover{background:var(--accent-dim);}
         <div class="form-group"><label>True Lung</label><input type="number" id="o_tlung" readonly/></div>
         <div class="form-group"><label>True Digest</label><input type="number" id="o_tdigest" readonly/></div>
         <div class="form-group"><label>True Cardio</label><input type="number" id="o_tcardio" readonly/></div>
+        <div class="form-group"><label>True Equip</label><input type="number" id="o_tequip" readonly/></div>
       </div>
 
       <button class="btn" id="save-btn">ЗБЕРЕГТИ В БАЗУ</button>
     </div>
   </div>
 
+  <!-- ANALYTICS -->
   <div id="tab-analytics" class="tab-content">
     <div class="card">
-      <div class="card-title">ДИНАМІКА ТА ЕКСПОРТ (TRUE_*)</div>
+      <div class="card-title" style="margin-bottom:15px">ДИНАМІКА ТА ЕКСПОРТ (TRUE_*)</div>
       
       <div class="form-grid" style="margin-bottom: 10px;">
         <div class="form-group"><label>З дати</label><input type="date" id="f-date-start"></div>
@@ -318,44 +341,78 @@ tbody tr:hover{background:var(--accent-dim);}
     </div>
   </div>
 
+  <!-- FORECAST -->
   <div id="tab-forecast" class="tab-content">
     <div class="card">
-      <div class="card-title">ПРОГНОЗ // ML MODEL</div>
+      <div class="card-title" style="margin-bottom:15px">ПРОГНОЗ // ML MODEL</div>
       <p style="color:var(--muted);font-size:.8rem;margin-bottom:20px">
-     Прогноз NB-моделі v2 (навчена на 231 тижнях, 2022-05-02 .. 2026-09-28).
-     Задайте сценарій на горизонт — функція «forecast» рахує потребу і
-     споживання по 7 групах з інтервалами.
-   </p>
-   <div class="form-grid" style="margin-bottom:15px;">
-     <div class="form-group"><label>Стартова дата (пн)</label><input type="date" id="fc-date"></div>
-     <div class="form-group"><label>Горизонт (тижнів)</label><input type="number" id="fc-horizon" value="4" min="1" max="52"></div>
-     <div class="form-group"><label>Бойові / тиждень</label><input type="number" id="fc-combat" value="1300" min="0"></div>
-     <div class="form-group"><label>W Scale</label><input type="number" id="fc-wscale" value="1.2" step="0.1" min="0"></div>
-     <div class="form-group"><label>K Prior</label><input type="number" id="fc-kprior" value="0.3" step="0.05" min="0"></div>
-     <div class="form-group"><label>Грип / тиждень</label><input type="number" id="fc-flu" value="95000" min="0"></div>
-     <div class="form-group"><label>C Mob</label><input type="number" id="fc-cmob" value="0.86" step="0.01" min="0" max="1"></div>
-     <div class="form-group"><label>K Pharm</label><input type="number" id="fc-kpharm" value="0.95" step="0.01" min="0" max="1"></div>
-     <div class="form-group"><label>Населення (млн)</label><input type="number" id="fc-pop" value="31.8" step="0.1" min="1"></div>
-     <div class="form-group" style="grid-column:span 2"><label>Тактика (мітка сценарію)</label><input type="text" id="fc-tactic" placeholder="напр. Positional_War_2026"></div>
-   </div>
-   <div style="margin-bottom:15px;display:flex;gap:10px;align-items:center;">
-     <label style="color:var(--muted);font-size:.75rem">РЕЖИМ:</label>
-     <button class="btn" id="fc-mode-btn" style="padding:6px 14px;font-size:.75rem">ПОТРЕБА</button>
-     <span id="fc-mode-hint" style="color:var(--muted);font-size:.7rem"></span>
-   </div>
+        Прогноз NB-моделі v2 (навчена на 231 тижнях, 2022-05-02 .. 2026-09-28).
+        Задайте сценарій на горизонт — функція «forecast» рахує потребу і
+        споживання по 7 групах з інтервалами.
+      </p>
+      <div class="form-grid" style="margin-bottom:15px;">
+        <div class="form-group"><label>Стартова дата (пн)</label><input type="date" id="fc-date"></div>
+        <div class="form-group"><label>Горизонт (тижнів)</label><input type="number" id="fc-horizon" value="4" min="1" max="52"></div>
+        <div class="form-group"><label>Бойові / тиждень</label><input type="number" id="fc-combat" value="1300" min="0"></div>
+        <div class="form-group"><label>W Scale</label><input type="number" id="fc-wscale" value="1.2" step="0.1" min="0"></div>
+        <div class="form-group"><label>K Prior</label><input type="number" id="fc-kprior" value="0.3" step="0.05" min="0"></div>
+        <div class="form-group"><label>Грип / тиждень</label><input type="number" id="fc-flu" value="95000" min="0"></div>
+        <div class="form-group"><label>C Mob</label><input type="number" id="fc-cmob" value="0.86" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>K Pharm</label><input type="number" id="fc-kpharm" value="0.95" step="0.01" min="0" max="1"></div>
+        <div class="form-group"><label>Населення (млн)</label><input type="number" id="fc-pop" value="31.8" step="0.1" min="1"></div>
+        <div class="form-group" style="grid-column:span 2"><label>Тактика (мітка сценарію)</label><input type="text" id="fc-tactic" placeholder="напр. Positional_War_2026"></div>
+      </div>
+      <div style="margin-bottom:15px;display:flex;gap:10px;align-items:center;">
+        <label style="color:var(--muted);font-size:.75rem">РЕЖИМ:</label>
+        <button class="btn" id="fc-mode-btn" style="padding:6px 14px;font-size:.75rem;width:auto;margin:0">ПОТРЕБА</button>
+        <span id="fc-mode-hint" style="color:var(--muted);font-size:.7rem"></span>
+      </div>
 
       <button class="btn" id="btn-run-forecast">РОЗРАХУВАТИ ПРОГНОЗ</button>
 
       <div id="forecast-result" style="margin-top:20px;color:var(--muted);font-size:.8rem">
-        Результат прогнозу з'явиться тут після підключення ML-сервісу.
+        Задайте параметри сценарію та натисніть «Розрахувати прогноз».
       </div>
     </div>
   </div>
 
+  <!-- USERS -->
   <div id="tab-users" class="tab-content">
     <div class="card">
-      <div class="card-title">ПРОФІЛІ КОРИСТУВАЧІВ</div>
+      <div class="card-title" style="margin-bottom:15px">ПРОФІЛІ КОРИСТУВАЧІВ</div>
       <div id="profiles-container"><p style="color:var(--muted)">Завантаження...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL (для виправлення окремих записів) -->
+<div class="modal-backdrop" id="edit-modal">
+  <div class="modal-box">
+    <div class="card-title" style="margin-bottom:15px;color:var(--accent)">РЕДАГУВАННЯ ЗАПИСУ // <span id="em-date-label"></span></div>
+    <input type="hidden" id="em-id"/>
+    <div class="form-grid">
+      <div class="form-group"><label>Дата</label><input type="date" id="em-date"/></div>
+      <div class="form-group"><label>W Scale</label><input type="number" id="em-wscale" step="0.01"/></div>
+      <div class="form-group" style="grid-column:span 2"><label>Tactic Focus</label><input type="text" id="em-tactic"/></div>
+      <div class="form-group"><label>Combat Cases</label><input type="number" id="em-combat"/></div>
+      <div class="form-group"><label>Flu Cases</label><input type="number" id="em-flu"/></div>
+      <div class="section-label full">// Журнал споживання (Ledger)</div>
+      <div class="form-group"><label>Tacmed</label><input type="number" id="em-tacmed" step="0.01"/></div>
+      <div class="form-group"><label>Painkiller</label><input type="number" id="em-pain" step="0.01"/></div>
+      <div class="form-group"><label>Antibiot</label><input type="number" id="em-anti" step="0.01"/></div>
+      <div class="form-group"><label>Lung</label><input type="number" id="em-lung" step="0.01"/></div>
+      <div class="form-group"><label>Digest</label><input type="number" id="em-digest" step="0.01"/></div>
+      <div class="form-group"><label>Cardio</label><input type="number" id="em-cardio" step="0.01"/></div>
+      <div class="form-group"><label>Equip</label><input type="number" id="em-equip" step="0.01"/></div>
+      <div class="section-label full">// Коефіцієнти</div>
+      <div class="form-group"><label>k_prior</label><input type="number" id="em-kprior" step="0.001"/></div>
+      <div class="form-group"><label>est_pop_mln</label><input type="number" id="em-pop" step="0.1"/></div>
+      <div class="form-group"><label>c_mob</label><input type="number" id="em-cmob" step="0.001"/></div>
+      <div class="form-group"><label>k_pharm</label><input type="number" id="em-kpharm" step="0.001"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="em-save" style="margin:0">ЗБЕРЕГТИ ТА ПЕРЕРАХУВАТИ</button>
+      <button class="btn-logout" id="em-cancel" style="padding:0 20px">СКАСУВАТИ</button>
     </div>
   </div>
 </div>
@@ -370,33 +427,27 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentRole = 'viewer';
 let recPage = 0;
+let currentRecordsPageData = [];
 const PAGE_SIZE = 10;
 
-// Змінні для Аналітики
 let rawAnalyticsData = [];
 let currentFilteredData = [];
 let analyticsChartInstance = null;
 
-// ──────────────── БЛОК 1 ────────────────
-// Замінює: COEFFS, randomNormal (Box-Muller), старий calcAll.
-// randomNormal і COEFFS більше ніде не використовуються — видаляються повністю.
-
+// ── МОДЕЛЬ NB v2 (Таблиця 3.1) ──
 const NB_PARAMS = {
-  // медіанні коефіцієнти у ВИХІДНИХ одиницях (перехід з z-шкали вже зроблено)
   groups: {
-    tacmed:     { c0: 4.908,  cE: 0.0001148, cI: 0,      cd: 0.01184 },
-    painkiller: { c0: 4.4329, cE: 0.00008288, cI: 0,     cd: 0 },
+    tacmed:     { c0: 4.908,  cE: 0.0001148,  cI: 0,      cd: 0.01184 },
+    painkiller: { c0: 4.4329, cE: 0.00008288, cI: 0,      cd: 0 },
     lung:       { c0: 4.0525, cE: 0,          cI: 54.33,  cd: 0 },
     antibiot:   { c0: 3.831,  cE: 0.0004656,  cI: 171.8,  cd: 0 },
     cardio:     { c0: 3.3814, cE: 0.00007339, cI: 140.4,  cd: 0 },
     equip:      { c0: 6.1719, cE: 0.0001291,  cI: 14.46,  cd: 0 },
     digest:     { c0: 4.4297, cE: 0.0001158,  cI: 4.025,  cd: 0 }
   },
-  // волонтерська частка за періодами (апостеріорні медіани V)
-  V: [0.362, 0.374, 0.028]   // індекс 0: 2022–2024, 1: 2025, 2: 2026+
+  V: [0.362, 0.374, 0.028]
 };
 
-// d_drone = роки від 01.01.2023 (лінійний тренд, назву збережено для сумісності)
 function dDroneFrom(dateStr) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((dateStr || '').trim());
   if (!m) return null;
@@ -405,23 +456,18 @@ function dDroneFrom(dateStr) {
   return Math.max(0, (t - t0) / (365 * 86400000));
 }
 
-// V за періодом: 2022–2024 → 0.362, 2025 → 0.374, 2026+ → 0.028
 function vFrom(dateStr) {
   const y = +((dateStr || '').trim().slice(0, 4));
   if (!y) return null;
   return NB_PARAMS.V[y <= 2024 ? 0 : (y === 2025 ? 1 : 2)];
 }
 
-// ── FORMULA CHAIN (детермінована: без vol-множника в потребі, без шуму) ──
-// true_*  = ПОТРЕБА (медіана NB, до вирахування волонтерської частки)
-// obs_hat = модельне СПОЖИВАННЯ = потреба × (1 − V_period)
 function calcAll(p) {
-  const e_c    = (p.combat_cases || 0) * (p.w_scale || 0) * (p.k_prior || 0.2);
-  const i_real = ((p.flu_cases || 0) * (p.c_mob || 0.86) * (p.k_pharm || 0.96))
+  const e_c    = (p.combat_cases || 0) * (p.w_scale || 0) * (p.k_prior ?? 0.2);
+  const i_real = ((p.flu_cases || 0) * (p.c_mob ?? 0.86) * (p.k_pharm ?? 0.96))
                / ((p.est_pop_mln || 31.8) * 1e6);
-  // дату беремо з форми; якщо порожня/некоректна — вважаємо сьогодні (тренд триває)
-  const dateStr = (p.date && p.date.trim && p.date.trim().length === 10)
-    ? p.date : new Date().toISOString().slice(0, 10);
+  const dateStr = (p.date && String(p.date).trim().length >= 10)
+    ? String(p.date).trim().slice(0, 10) : new Date().toISOString().slice(0, 10);
   const d_drone = dDroneFrom(dateStr) ?? 0;
   const V       = vFrom(dateStr) ?? NB_PARAMS.V[0];
 
@@ -438,14 +484,13 @@ function calcAll(p) {
   return res;
 }
 
-
 // ── TOAST ──
 function toast(msg, err=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast' + (err?' error':'');
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
+  setTimeout(()=>t.classList.remove('show'), 3500);
 }
 
 // ── AUTH ──
@@ -530,7 +575,6 @@ document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
 });
 
 // ── УТИЛІТИ ──
-// Простий тиждень: 01.01–07.01 = тиждень 1, далі по 7 днів (не ISO)
 function getWeekNumber(dateStr) {
   if(!dateStr) return '—';
   const datePart = String(dateStr).slice(0,10);
@@ -545,8 +589,8 @@ function getWeekNumber(dateStr) {
 async function loadDashboard() {
   const {data,error} = await sb.from('records').select('*').order('date',{ascending:false}).limit(10);
   const body = document.getElementById('dash-body');
-  if(error){ body.innerHTML=`<tr><td colspan="10" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
-  if(!data?.length){ body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
+  if(error){ body.innerHTML=`<tr><td colspan="11" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  if(!data?.length){ body.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
   const lt = (l,t) => `${l??'—'} / <span class="td-true">${t!=null?t.toFixed(4):'—'}</span>`;
   body.innerHTML = data.map(r=>`<tr>
     <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
@@ -569,6 +613,7 @@ async function loadRecords() {
   const {data,error,count} = await sb.from('records').select('*',{count:'exact'}).order('date',{ascending:false}).range(from,from+PAGE_SIZE-1);
   const body = document.getElementById('records-body');
   if(error){ body.innerHTML=`<tr><td colspan="20" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  currentRecordsPageData = data || [];
   const canEdit = currentRole==='admin';
   const total = Math.ceil((count||0)/PAGE_SIZE);
   document.getElementById('page-info').textContent = `Записів: ${count} // Сторінка ${recPage+1} з ${total||1}`;
@@ -576,7 +621,7 @@ async function loadRecords() {
   document.getElementById('pg-next').disabled = recPage>=total-1;
   const n = v => v!=null ? v : '<span style="color:var(--muted)">—</span>';
   const t = v => v!=null ? v.toFixed(4) : '<span style="color:var(--muted)">—</span>';
-  body.innerHTML = data.map(r=>`<tr>
+  body.innerHTML = currentRecordsPageData.map((r, idx)=>`<tr>
     <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
     <td>${getWeekNumber(r.date)}</td>
     <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${r.tactic_focus||'—'}</td>
@@ -587,7 +632,10 @@ async function loadRecords() {
     <td>${n(r.lung)}</td><td>${n(r.digest)}</td><td>${n(r.cardio)}</td><td>${n(r.equip)}</td>
     <td>${t(r.true_tacmed)}</td><td>${t(r.true_painkiller)}</td><td>${t(r.true_antibiot)}</td>
     <td>${t(r.true_lung)}</td><td>${t(r.true_digest)}</td><td>${t(r.true_cardio)}</td>
-    ${canEdit?`<td><button class="btn-danger" onclick="deleteRecord('${r.id}')">✕</button></td>`:''}
+    ${canEdit?`<td>
+      <button class="btn-edit" onclick="openEditModal(${idx})" title="Редагувати">✎</button>
+      <button class="btn-danger" onclick="deleteRecord('${r.id}')" title="Видалити">✕</button>
+    </td>`:''}
   </tr>`).join('');
 }
 
@@ -601,23 +649,107 @@ async function deleteRecord(id) {
   toast('Видалено!'); loadRecords();
 }
 
-// ──────────────── БЛОК 2 ────────────────
-// Замінює: function initInputForm() {...}
-// Що нового: перерахунок при зміні ДАТИ; поле d_drone стає readonly.
+// ── МАСОВИЙ ПЕРЕРАХУНОК БАЗИ (ВИПРАВЛЕННЯ ЗІПСОВАНИХ TRUE_*) ──
+document.getElementById('btn-recalc-all')?.addEventListener('click', async () => {
+  if (!confirm('Перерахувати індекси (e_c, i_real, d_drone) та значення потреби (true_*, obs_hat_*) для ВСІХ записів у базі за формулою табл. 3.1?')) return;
+  const btn = document.getElementById('btn-recalc-all');
+  btn.disabled = true;
+  btn.textContent = '⏳ ОНОВЛЕННЯ...';
 
+  try {
+    const { data: allRows, error } = await sb.from('records').select('*');
+    if (error) throw error;
+
+    let updated = 0;
+    for (const row of allRows) {
+      const calc = calcAll(row);
+      const { error: upErr } = await sb.from('records').update(calc).eq('id', row.id);
+      if (upErr) throw upErr;
+      updated++;
+    }
+    toast(`Оновлено ${updated} записів!`);
+    loadRecords();
+    loadDashboard();
+  } catch (e) {
+    toast('Помилка перерахунку: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ ПЕРЕРАХУВАТИ БАЗУ (TRUE_*)';
+  }
+});
+
+// ── МОДАЛЬНЕ ВІКНО РЕДАГУВАННЯ ──
+function openEditModal(idx) {
+  const r = currentRecordsPageData[idx];
+  if (!r) return;
+  document.getElementById('em-id').value = r.id;
+  document.getElementById('em-date-label').textContent = (r.date || '').slice(0, 10);
+  document.getElementById('em-date').value = (r.date || '').slice(0, 10);
+  document.getElementById('em-wscale').value = r.w_scale ?? '';
+  document.getElementById('em-tactic').value = r.tactic_focus ?? '';
+  document.getElementById('em-combat').value = r.combat_cases ?? '';
+  document.getElementById('em-flu').value = r.flu_cases ?? '';
+  document.getElementById('em-tacmed').value = r.tacmed ?? '';
+  document.getElementById('em-pain').value = r.painkiller ?? '';
+  document.getElementById('em-anti').value = r.antibiot ?? '';
+  document.getElementById('em-lung').value = r.lung ?? '';
+  document.getElementById('em-digest').value = r.digest ?? '';
+  document.getElementById('em-cardio').value = r.cardio ?? '';
+  document.getElementById('em-equip').value = r.equip ?? '';
+  document.getElementById('em-kprior').value = r.k_prior ?? 0.2;
+  document.getElementById('em-pop').value = r.est_pop_mln ?? 31.8;
+  document.getElementById('em-cmob').value = r.c_mob ?? 0.86;
+  document.getElementById('em-kpharm').value = r.k_pharm ?? 0.96;
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+document.getElementById('em-cancel').addEventListener('click', () => {
+  document.getElementById('edit-modal').classList.remove('open');
+});
+
+document.getElementById('em-save').addEventListener('click', async () => {
+  const id = document.getElementById('em-id').value;
+  const numOrNull = elId => {
+    const val = document.getElementById(elId).value;
+    return val === '' ? null : parseFloat(val);
+  };
+  const g = elId => parseFloat(document.getElementById(elId).value) || 0;
+  const dateVal = document.getElementById('em-date').value.trim() || null;
+
+  const baseFields = {
+    date: dateVal,
+    tactic_focus: document.getElementById('em-tactic').value.trim() || null,
+    combat_cases: g('em-combat'),
+    w_scale: g('em-wscale'),
+    flu_cases: g('em-flu'),
+    tacmed: numOrNull('em-tacmed'),
+    painkiller: numOrNull('em-pain'),
+    antibiot: numOrNull('em-anti'),
+    lung: numOrNull('em-lung'),
+    digest: numOrNull('em-digest'),
+    cardio: numOrNull('em-cardio'),
+    equip: numOrNull('em-equip'),
+    k_prior: g('em-kprior') || 0.2,
+    est_pop_mln: g('em-pop') || 31.8,
+    c_mob: g('em-cmob') || 0.86,
+    k_pharm: g('em-kpharm') || 0.96
+  };
+
+  const calc = calcAll(baseFields);
+  const { error } = await sb.from('records').update({ ...baseFields, ...calc }).eq('id', id);
+  if (error) { toast('Помилка збереження: ' + error.message, true); return; }
+  toast('Запис оновлено та перераховано!');
+  document.getElementById('edit-modal').classList.remove('open');
+  loadRecords();
+  loadDashboard();
+});
+
+// ── INPUT FORM ──
 function initInputForm() {
   ['i_date', 'i_combat', 'i_wscale', 'i_flu', 'i_kprior', 'i_pop', 'i_cmob', 'i_kpharm']
     .forEach(id => document.getElementById(id)?.addEventListener('input', recalcOutputs));
-  const dEl = document.getElementById('i_drone');
-  if (dEl) { dEl.readOnly = true; dEl.title = 'Тренд d_drone обчислюється з дати автоматично'; }
   recalcOutputs();
 }
-
-
-// ──────────────── БЛОК 3 ────────────────
-// Замінює: function recalcOutputs() {...}
-// Що нового: calcAll одержує дату; d_drone показується обчислений;
-// true_equip виводиться, якщо у формі є поле o_tequip (додайте за бажанням).
 
 function recalcOutputs() {
   const g = id => parseFloat(document.getElementById(id)?.value) || 0;
@@ -629,7 +761,7 @@ function recalcOutputs() {
     est_pop_mln:  g('i_pop') || 31.8,
     date:         s('i_date')
   });
-  document.getElementById('i_drone').value   = r.d_drone;   // readonly-тренд
+  document.getElementById('i_drone').value   = r.d_drone;
   document.getElementById('o_ec').value      = r.e_c;
   document.getElementById('o_ireal').value   = r.i_real;
   document.getElementById('o_ttacmed').value = r.true_tacmed;
@@ -638,10 +770,8 @@ function recalcOutputs() {
   document.getElementById('o_tlung').value   = r.true_lung;
   document.getElementById('o_tdigest').value = r.true_digest;
   document.getElementById('o_tcardio').value = r.true_cardio;
-  const eq = document.getElementById('o_tequip');
-  if (eq) eq.value = r.true_equip;
+  document.getElementById('o_tequip').value  = r.true_equip;
 }
-
 
 document.getElementById('save-btn').addEventListener('click', async ()=>{
   const g = id => parseFloat(document.getElementById(id)?.value)||0;
@@ -650,7 +780,7 @@ document.getElementById('save-btn').addEventListener('click', async ()=>{
     combat_cases:g('i_combat'), w_scale:g('i_wscale'), k_prior:g('i_kprior')||0.2,
     flu_cases:g('i_flu'), c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96,
     est_pop_mln:g('i_pop')||31.8,
-    date: s('i_date')                      // якщо порожньо — calcAll візьме сьогодні
+    date: s('i_date')
   });
   const payload = {
     date:s('i_date'), tactic_focus:s('i_tactic'),
@@ -659,7 +789,7 @@ document.getElementById('save-btn').addEventListener('click', async ()=>{
     lung:g('i_lung'), digest:g('i_digest'), cardio:g('i_cardio'), equip:g('i_equip'),
     k_prior:g('i_kprior')||0.2, est_pop_mln:g('i_pop')||31.8,
     c_mob:g('i_cmob')||0.86, k_pharm:g('i_kpharm')||0.96,
-    ...r                                   // e_c, i_real, d_drone, true_*, obs_hat_*
+    ...r
   };
   const btn = document.getElementById('save-btn');
   btn.disabled=true; btn.textContent='ЗБЕРЕЖЕННЯ...';
@@ -670,13 +800,12 @@ document.getElementById('save-btn').addEventListener('click', async ()=>{
   switchTab('tab-dashboard'); loadDashboard();
 });
 
-// ── АНАЛІТИКА ТА ЕКСПОРТ (FORECAST TAB) ──
+// ── АНАЛІТИКА ТА ЕКСПОРТ ──
 async function loadAnalytics() {
-  // Завантажуємо всі дані для аналітики, сортуємо від найстаріших до нових для графіка
   const {data, error} = await sb.from('records').select('*').order('date', {ascending: true});
   if(error) { toast('Помилка завантаження аналітики: ' + error.message, true); return; }
   rawAnalyticsData = data || [];
-  applyFilters(); // Одразу малюємо з порожніми фільтрами (весь масив)
+  applyFilters();
 }
 
 function applyFilters() {
@@ -705,7 +834,6 @@ function renderAnalyticsChart(data) {
   const ctx = document.getElementById('analyticsChart').getContext('2d');
   if(analyticsChartInstance) analyticsChartInstance.destroy();
 
-  // Налаштування теми Chart.js
   Chart.defaults.color = '#c9d1e0';
   Chart.defaults.borderColor = '#1e2333';
   Chart.defaults.font.family = "'Share Tech Mono', monospace";
@@ -717,12 +845,12 @@ function renderAnalyticsChart(data) {
     data: {
       labels: labels,
       datasets: [
-        { label: 'Tacmed', data: data.map(d=>d.true_tacmed), borderColor: '#00e5a0', tension: 0.3, pointRadius: 3 },
-        { label: 'Painkiller', data: data.map(d=>d.true_painkiller), borderColor: '#ff4560', tension: 0.3, pointRadius: 3 },
-        { label: 'Antibiot', data: data.map(d=>d.true_antibiot), borderColor: '#4d9fff', tension: 0.3, pointRadius: 3 },
-        { label: 'Lung', data: data.map(d=>d.true_lung), borderColor: '#ffb830', tension: 0.3, pointRadius: 3 },
-        { label: 'Digest', data: data.map(d=>d.true_digest), borderColor: '#b566ff', tension: 0.3, pointRadius: 3 },
-        { label: 'Cardio', data: data.map(d=>d.true_cardio), borderColor: '#00d2ff', tension: 0.3, pointRadius: 3 }
+        { label: 'Tacmed', data: data.map(d=>d.true_tacmed), borderColor: '#00e5a0', tension: 0.3, pointRadius: 2 },
+        { label: 'Painkiller', data: data.map(d=>d.true_painkiller), borderColor: '#ff4560', tension: 0.3, pointRadius: 2 },
+        { label: 'Antibiot', data: data.map(d=>d.true_antibiot), borderColor: '#4d9fff', tension: 0.3, pointRadius: 2 },
+        { label: 'Lung', data: data.map(d=>d.true_lung), borderColor: '#ffb830', tension: 0.3, pointRadius: 2 },
+        { label: 'Digest', data: data.map(d=>d.true_digest), borderColor: '#b566ff', tension: 0.3, pointRadius: 2 },
+        { label: 'Cardio', data: data.map(d=>d.true_cardio), borderColor: '#00d2ff', tension: 0.3, pointRadius: 2 }
       ]
     },
     options: {
@@ -739,7 +867,6 @@ function renderAnalyticsTable(data) {
   if(!data.length) { tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
   
   const n = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '—';
-  // Виводимо дані в зворотному порядку (щоб найновіші були зверху таблиці, хоча на графіку вони справа)
   const reversedData = [...data].reverse();
   
   tbody.innerHTML = reversedData.map(r=>`<tr>
@@ -764,8 +891,6 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
     toast('Немає даних для експорту', true);
     return;
   }
-  
-  // Створюємо "пласку" структуру для Excel
   const exportData = currentFilteredData.map(r => ({
     'Дата': r.date || '',
     'Тактика': r.tactic_focus || '',
@@ -784,28 +909,22 @@ document.getElementById('btn-export-excel').addEventListener('click', () => {
     'Digest (True)': r.true_digest || 0,
     'Cardio (Orig)': r.cardio || 0,
     'Cardio (True)': r.true_cardio || 0,
-    'Equip (Orig)': r.equip || 0
+    'Equip (Orig)': r.equip || 0,
+    'Equip (True)': r.true_equip || 0
   }));
 
-  // Генеруємо Excel файл через SheetJS
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "DigitalTwin_Analytics");
   XLSX.writeFile(workbook, "DigitalTwin_Export.xlsx");
-  
   toast('Експорт завершено!');
 });
 
-
-// ──────────────── БЛОК 6 (JS вкладки «ПРОГноз») ────────────────
-// Замінює: initForecastTab() + обробник btn-run-forecast (обидва «заглушки»
-// в кінці секції «── ПРОГНОЗ (ML, Julia backend — заглушка) ──»).
-
-let fcLast = null;          // остання відповідь Edge Function
-let fcMode = 'need';         // 'need' (потреба) | 'obs' (споживання)
+// ── ПРОГНОЗ (Edge Function «forecast») ──
+let fcLast = null;
+let fcMode = 'need';
 
 function initForecastTab() {
-  // предзаповнення стартової дати: останній тиждень бази + 7 днів
   const dEl = document.getElementById('fc-date');
   if (dEl && !dEl.value) {
     sb.from('records').select('date').order('date', { ascending: false }).limit(1)
@@ -831,11 +950,10 @@ document.getElementById('btn-run-forecast')?.addEventListener('click', async () 
     renderForecast();
   } catch (e) {
     el.innerHTML = '<span style="color:var(--accent2)">Помилка прогнозу: ' + e.message +
-      '.<br>Перевірте, що Edge Function «forecast» розгорнута (канвас edge-forecast-fn).</span>';
+      '.<br>Перевірте, що Edge Function «forecast» розгорнута.</span>';
   }
 });
 
-// перемикач «потреба/споживання» — перемальовка без нового запиту
 document.getElementById('fc-mode-btn')?.addEventListener('click', () => {
   fcMode = fcMode === 'need' ? 'obs' : 'need';
   renderForecast();
@@ -872,21 +990,6 @@ function renderForecast() {
     '<div class="table-container"><table><thead><tr><th>Дата</th><th>d_drone</th><th>V</th>' +
       GN.map(([, n]) => `<th>${n}</th>`).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
-
-document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
-  document.getElementById('forecast-result').innerHTML =
-    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
-});
-
-document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
-  document.getElementById('forecast-result').innerHTML =
-    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
-});
-
-document.getElementById('btn-run-forecast')?.addEventListener('click', ()=>{
-  document.getElementById('forecast-result').innerHTML =
-    '<span style="color:var(--warning)">ML-сервіс ще не підключено — це заглушка інтерфейсу.</span>';
-});
 
 // ── USERS ──
 async function loadProfiles() {
