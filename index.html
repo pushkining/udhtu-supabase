@@ -203,9 +203,10 @@ tbody tr:hover{background:var(--accent-dim);}
               <th class="th-true">Lung L/T</th>
               <th class="th-true">Digest L/T</th>
               <th class="th-true">Cardio L/T</th>
+              <th class="th-true">Equip L/T</th>
             </tr>
           </thead>
-          <tbody id="dash-body"><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+          <tbody id="dash-body"><tr><td colspan="12" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -227,11 +228,11 @@ tbody tr:hover{background:var(--accent-dim);}
               <th>Дата</th><th>Тиждень</th><th>Тактика</th><th>Бойові</th><th>W Scale</th><th>Грип</th>
               <th>Tacmed</th><th>Painkiller</th><th>Antibiot</th><th>Lung</th><th>Digest</th><th>Cardio</th><th>Equip</th>
               <th class="th-true">T.Tacmed</th><th class="th-true">T.Pain</th><th class="th-true">T.Anti</th>
-              <th class="th-true">T.Lung</th><th class="th-true">T.Digest</th><th class="th-true">T.Cardio</th>
+              <th class="th-true">T.Lung</th><th class="th-true">T.Digest</th><th class="th-true">T.Cardio</th><th class="th-true">T.Equip</th>
               <th class="admin-only hidden">Дії</th>
             </tr>
           </thead>
-          <tbody id="records-body"><tr><td colspan="20" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
+          <tbody id="records-body"><tr><td colspan="21" style="text-align:center;color:var(--muted);padding:20px">Завантаження...</td></tr></tbody>
         </table>
       </div>
       <div class="pagination">
@@ -331,10 +332,11 @@ tbody tr:hover{background:var(--accent-dim);}
                <th class="th-true">Lung (T)</th>
                <th class="th-true">Digest (T)</th>
                <th class="th-true">Cardio (T)</th>
+               <th class="th-true">Equip (T)</th>
              </tr>
            </thead>
            <tbody id="analytics-body">
-              <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Завантаження аналітики...</td></tr>
+              <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:20px">Завантаження аналітики...</td></tr>
            </tbody>
         </table>
       </div>
@@ -385,7 +387,7 @@ tbody tr:hover{background:var(--accent-dim);}
   </div>
 </div>
 
-<!-- EDIT MODAL (для виправлення окремих записів) -->
+<!-- EDIT MODAL -->
 <div class="modal-backdrop" id="edit-modal">
   <div class="modal-box">
     <div class="card-title" style="margin-bottom:15px;color:var(--accent)">РЕДАГУВАННЯ ЗАПИСУ // <span id="em-date-label"></span></div>
@@ -589,8 +591,8 @@ function getWeekNumber(dateStr) {
 async function loadDashboard() {
   const {data,error} = await sb.from('records').select('*').order('date',{ascending:false}).limit(10);
   const body = document.getElementById('dash-body');
-  if(error){ body.innerHTML=`<tr><td colspan="11" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
-  if(!data?.length){ body.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
+  if(error){ body.innerHTML=`<tr><td colspan="12" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  if(!data?.length){ body.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:20px">Записів немає</td></tr>'; return; }
   const lt = (l,t) => `${l??'—'} / <span class="td-true">${t!=null?t.toFixed(4):'—'}</span>`;
   body.innerHTML = data.map(r=>`<tr>
     <td class="td-date">${(r.date||'').slice(0,10)||'—'}</td>
@@ -604,6 +606,7 @@ async function loadDashboard() {
     <td>${lt(r.lung,r.true_lung)}</td>
     <td>${lt(r.digest,r.true_digest)}</td>
     <td>${lt(r.cardio,r.true_cardio)}</td>
+    <td>${lt(r.equip,r.true_equip)}</td>
   </tr>`).join('');
 }
 
@@ -612,7 +615,7 @@ async function loadRecords() {
   const from = recPage * PAGE_SIZE;
   const {data,error,count} = await sb.from('records').select('*',{count:'exact'}).order('date',{ascending:false}).range(from,from+PAGE_SIZE-1);
   const body = document.getElementById('records-body');
-  if(error){ body.innerHTML=`<tr><td colspan="20" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
+  if(error){ body.innerHTML=`<tr><td colspan="21" style="color:var(--accent2)">Помилка: ${error.message}</td></tr>`; return; }
   currentRecordsPageData = data || [];
   const canEdit = currentRole==='admin';
   const total = Math.ceil((count||0)/PAGE_SIZE);
@@ -631,7 +634,7 @@ async function loadRecords() {
     <td>${n(r.tacmed)}</td><td>${n(r.painkiller)}</td><td>${n(r.antibiot)}</td>
     <td>${n(r.lung)}</td><td>${n(r.digest)}</td><td>${n(r.cardio)}</td><td>${n(r.equip)}</td>
     <td>${t(r.true_tacmed)}</td><td>${t(r.true_painkiller)}</td><td>${t(r.true_antibiot)}</td>
-    <td>${t(r.true_lung)}</td><td>${t(r.true_digest)}</td><td>${t(r.true_cardio)}</td>
+    <td>${t(r.true_lung)}</td><td>${t(r.true_digest)}</td><td>${t(r.true_cardio)}</td><td>${t(r.true_equip)}</td>
     ${canEdit?`<td>
       <button class="btn-edit" onclick="openEditModal(${idx})" title="Редагувати">✎</button>
       <button class="btn-danger" onclick="deleteRecord('${r.id}')" title="Видалити">✕</button>
@@ -649,7 +652,7 @@ async function deleteRecord(id) {
   toast('Видалено!'); loadRecords();
 }
 
-// ── МАСОВИЙ ПЕРЕРАХУНОК БАЗИ (ВИПРАВЛЕННЯ ЗІПСОВАНИХ TRUE_*) ──
+// ── МАСОВИЙ ПЕРЕРАХУНОК БАЗИ ──
 document.getElementById('btn-recalc-all')?.addEventListener('click', async () => {
   if (!confirm('Перерахувати індекси (e_c, i_real, d_drone) та значення потреби (true_*, obs_hat_*) для ВСІХ записів у базі за формулою табл. 3.1?')) return;
   const btn = document.getElementById('btn-recalc-all');
@@ -850,7 +853,8 @@ function renderAnalyticsChart(data) {
         { label: 'Antibiot', data: data.map(d=>d.true_antibiot), borderColor: '#4d9fff', tension: 0.3, pointRadius: 2 },
         { label: 'Lung', data: data.map(d=>d.true_lung), borderColor: '#ffb830', tension: 0.3, pointRadius: 2 },
         { label: 'Digest', data: data.map(d=>d.true_digest), borderColor: '#b566ff', tension: 0.3, pointRadius: 2 },
-        { label: 'Cardio', data: data.map(d=>d.true_cardio), borderColor: '#00d2ff', tension: 0.3, pointRadius: 2 }
+        { label: 'Cardio', data: data.map(d=>d.true_cardio), borderColor: '#00d2ff', tension: 0.3, pointRadius: 2 },
+        { label: 'Equip', data: data.map(d=>d.true_equip), borderColor: '#94a3b8', tension: 0.3, pointRadius: 2, hidden: true }
       ]
     },
     options: {
@@ -864,7 +868,7 @@ function renderAnalyticsChart(data) {
 
 function renderAnalyticsTable(data) {
   const tbody = document.getElementById('analytics-body');
-  if(!data.length) { tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
+  if(!data.length) { tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:20px">За цими фільтрами даних немає</td></tr>'; return; }
   
   const n = v => v!=null ? `<span class="td-true">${v.toFixed(4)}</span>` : '—';
   const reversedData = [...data].reverse();
@@ -881,6 +885,7 @@ function renderAnalyticsTable(data) {
     <td>${n(r.true_lung)}</td>
     <td>${n(r.true_digest)}</td>
     <td>${n(r.true_cardio)}</td>
+    <td>${n(r.true_equip)}</td>
   </tr>`).join('');
 }
 
@@ -973,7 +978,8 @@ function renderForecast() {
               ['antibiot','Antibiot'],['cardio','Cardio'],['equip','Equip'],['digest','Digest']];
   const rows = fcLast.weeks.map(w => {
     const cells = GN.map(([g]) => {
-      const gr = w.groups[g];
+      const gr = w.groups?.[g];
+      if (!gr) return '<td>—</td>';
       const v = fcMode === 'need' ? gr.need : gr.obs_hat;
       const iv = fcMode === 'obs' ? ` <span style="color:var(--muted);font-size:.65rem">(${gr.p05}–${gr.p95})</span>` : '';
       return `<td class="td-true">${v != null ? v.toFixed(1) : '—'}${iv}</td>`;
